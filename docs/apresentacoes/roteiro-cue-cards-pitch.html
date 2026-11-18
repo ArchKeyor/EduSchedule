@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cue Cards — Roteiro de Apresentação TimeTabling</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 8mm 10mm 10mm 10mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+      line-height: 1.45;
+      padding: 12px;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    .container {
+      max-width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* TOP HEADER */
+    .header-card {
+      background: #0f172a;
+      color: #ffffff;
+      border-radius: 8px;
+      padding: 14px 18px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      page-break-inside: avoid;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+    }
+
+    .header-title {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      text-transform: uppercase;
+      color: #38bdf8;
+    }
+
+    .header-subtitle {
+      font-size: 11.5px;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+
+    .badge-time-total {
+      background: #e11d48;
+      color: #ffffff;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-weight: 800;
+      font-size: 12px;
+      letter-spacing: 0.3px;
+      box-shadow: 0 2px 6px rgba(225, 29, 72, 0.4);
+      white-space: nowrap;
+    }
+
+    .header-meta {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      font-size: 11.5px;
+      color: #cbd5e1;
+    }
+
+    .header-meta strong {
+      color: #ffffff;
+    }
+
+    /* CUE CARD SLIDE BASE */
+    .cue-card {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 12px 16px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      page-break-inside: avoid;
+      position: relative;
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed #cbd5e1;
+    }
+
+    .card-title {
+      font-size: 14.5px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-timer-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
+
+    .meta-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 12px;
+      color: #334155;
+      margin-bottom: 8px;
+    }
+
+    .meta-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      line-height: 1.4;
+    }
+
+    .bullet {
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .speaker-badge {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.4px;
+    }
+
+    .visual-focus-bar {
+      border-left-width: 3.5px;
+      border-left-style: solid;
+      padding-left: 8px;
+      font-weight: 500;
+      color: #1e293b;
+    }
+
+    /* SPEECH CALLOUT BOX */
+    .speech-box {
+      border-radius: 6px;
+      border-left-width: 5px;
+      border-left-style: solid;
+      padding: 10px 14px;
+      font-size: 13px;
+      line-height: 1.55;
+      font-style: italic;
+      color: #0f172a;
+      margin-top: 6px;
+      margin-bottom: 6px;
+    }
+
+    mark {
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-weight: 800;
+      font-style: normal;
+    }
+
+    /* ACTION PILL */
+    .action-container {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+
+    .action-pill {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* CHECKLIST FOOTER */
+    .footer-card {
+      background: #0f172a;
+      color: #ffffff;
+      border-radius: 8px;
+      padding: 14px 18px;
+      page-break-inside: avoid;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      margin-top: 4px;
+    }
+
+    .footer-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #38bdf8;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 6px;
+    }
+
+    .checklist-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      font-size: 11px;
+      color: #cbd5e1;
+    }
+
+    .checklist-col h4 {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .checklist-col ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .checklist-col li {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .checklist-box {
+      width: 12px;
+      height: 12px;
+      border: 1.5px solid #94a3b8;
+      border-radius: 2px;
+      display: inline-block;
+    }
+
+    /* ========================================================= */
+    /* PALETA CROMÁTICA RADICAL E DE ALTO CONTRASTE POR SLIDE    */
+    /* ========================================================= */
+
+    /* SLIDE 1: AZUL COBALTO (#2563eb) */
+    .theme-s1 {
+      border-left: 6px solid #2563eb;
+    }
+    .theme-s1 .card-title { color: #2563eb; }
+    .theme-s1 .card-timer-pill { background: #dbeafe; color: #1d4ed8; }
+    .theme-s1 .bullet { color: #2563eb; }
+    .theme-s1 .speaker-badge { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    .theme-s1 .visual-focus-bar { border-left-color: #2563eb; }
+    .theme-s1 .speech-box { background: #eff6ff; border-left-color: #2563eb; }
+    .theme-s1 mark { background: #bfdbfe; color: #1e3a8a; }
+    .theme-s1 .action-pill { background: #2563eb; color: #ffffff; }
+
+    /* SLIDE 2: LARANJA TANGERINA (#ea580c) [Oposto/Contraste] */
+    .theme-s2 {
+      border-left: 6px solid #ea580c;
+    }
+    .theme-s2 .card-title { color: #ea580c; }
+    .theme-s2 .card-timer-pill { background: #ffedd5; color: #c2410c; }
+    .theme-s2 .bullet { color: #ea580c; }
+    .theme-s2 .speaker-badge { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
+    .theme-s2 .visual-focus-bar { border-left-color: #ea580c; }
+    .theme-s2 .speech-box { background: #fff7ed; border-left-color: #ea580c; }
+    .theme-s2 mark { background: #fed7aa; color: #7c2d12; }
+    .theme-s2 .action-pill { background: #ea580c; color: #ffffff; }
+
+    /* SLIDE 3: VERDE ESMERALDA (#059669) [Contraste com Laranja] */
+    .theme-s3 {
+      border-left: 6px solid #059669;
+    }
+    .theme-s3 .card-title { color: #059669; }
+    .theme-s3 .card-timer-pill { background: #d1fae5; color: #047857; }
+    .theme-s3 .bullet { color: #059669; }
+    .theme-s3 .speaker-badge { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .theme-s3 .visual-focus-bar { border-left-color: #059669; }
+    .theme-s3 .speech-box { background: #ecfdf5; border-left-color: #059669; }
+    .theme-s3 mark { background: #a7f3d0; color: #064e3b; }
+    .theme-s3 .action-pill { background: #059669; color: #ffffff; }
+
+    /* SLIDE 4: VIOLETA / PÚRPURA (#7c3aed) [Contraste com Verde] */
+    .theme-s4 {
+      border-left: 6px solid #7c3aed;
+    }
+    .theme-s4 .card-title { color: #7c3aed; }
+    .theme-s4 .card-timer-pill { background: #ede9fe; color: #6d28d9; }
+    .theme-s4 .bullet { color: #7c3aed; }
+    .theme-s4 .speaker-badge { background: #f5f3ff; color: #5b21b6; border: 1px solid #ddd6fe; }
+    .theme-s4 .visual-focus-bar { border-left-color: #7c3aed; }
+    .theme-s4 .speech-box { background: #f5f3ff; border-left-color: #7c3aed; }
+    .theme-s4 mark { background: #ddd6fe; color: #4c1d95; }
+    .theme-s4 .action-pill { background: #7c3aed; color: #ffffff; }
+
+    /* SLIDE 5: DOURADO SOLAR / ÂMBAR (#d97706) [Oposto ao Roxo] */
+    .theme-s5 {
+      border-left: 6px solid #d97706;
+    }
+    .theme-s5 .card-title { color: #d97706; }
+    .theme-s5 .card-timer-pill { background: #fef3c7; color: #b45309; }
+    .theme-s5 .bullet { color: #d97706; }
+    .theme-s5 .speaker-badge { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+    .theme-s5 .visual-focus-bar { border-left-color: #d97706; }
+    .theme-s5 .speech-box { background: #fffbeb; border-left-color: #d97706; }
+    .theme-s5 mark { background: #fde68a; color: #78350f; }
+    .theme-s5 .action-pill { background: #d97706; color: #ffffff; }
+
+    /* SLIDE 6: CIANO / TURQUESA (#0891b2) [Frio contra Dourado] */
+    .theme-s6 {
+      border-left: 6px solid #0891b2;
+    }
+    .theme-s6 .card-title { color: #0891b2; }
+    .theme-s6 .card-timer-pill { background: #cffafe; color: #0e7490; }
+    .theme-s6 .bullet { color: #0891b2; }
+    .theme-s6 .speaker-badge { background: #ecfeff; color: #155e75; border: 1px solid #a5f3fc; }
+    .theme-s6 .visual-focus-bar { border-left-color: #0891b2; }
+    .theme-s6 .speech-box { background: #ecfeff; border-left-color: #0891b2; }
+    .theme-s6 mark { background: #a5f3fc; color: #164e63; }
+    .theme-s6 .action-pill { background: #0891b2; color: #ffffff; }
+
+    /* SLIDE 7: VERMELHO RUBI (#e11d48) [Oposto ao Ciano] */
+    .theme-s7 {
+      border-left: 6px solid #e11d48;
+    }
+    .theme-s7 .card-title { color: #e11d48; }
+    .theme-s7 .card-timer-pill { background: #ffe4e6; color: #be123c; }
+    .theme-s7 .bullet { color: #e11d48; }
+    .theme-s7 .speaker-badge { background: #fff1f2; color: #9f1239; border: 1px solid #fecdd3; }
+    .theme-s7 .visual-focus-bar { border-left-color: #e11d48; }
+    .theme-s7 .speech-box { background: #fff1f2; border-left-color: #e11d48; }
+    .theme-s7 mark { background: #fecdd3; color: #881337; }
+    .theme-s7 .action-pill { background: #e11d48; color: #ffffff; }
+
+    /* SLIDE 8: VERDE FLORESTA PROFUNDO (#15803d) [Quebra do Vermelho] */
+    .theme-s8 {
+      border-left: 6px solid #15803d;
+    }
+    .theme-s8 .card-title { color: #15803d; }
+    .theme-s8 .card-timer-pill { background: #dcfce7; color: #166534; }
+    .theme-s8 .bullet { color: #15803d; }
+    .theme-s8 .speaker-badge { background: #f0fdf4; color: #14532d; border: 1px solid #bbf7d0; }
+    .theme-s8 .visual-focus-bar { border-left-color: #15803d; }
+    .theme-s8 .speech-box { background: #f0fdf4; border-left-color: #15803d; }
+    .theme-s8 mark { background: #bbf7d0; color: #14532d; }
+    .theme-s8 .action-pill { background: #15803d; color: #ffffff; }
+
+    /* SLIDE 9: MAGENTA / PINK CHOQUE (#c026d3) [Contraste com Verde] */
+    .theme-s9 {
+      border-left: 6px solid #c026d3;
+    }
+    .theme-s9 .card-title { color: #c026d3; }
+    .theme-s9 .card-timer-pill { background: #fae8ff; color: #a21caf; }
+    .theme-s9 .bullet { color: #c026d3; }
+    .theme-s9 .speaker-badge { background: #fdf4ff; color: #86198f; border: 1px solid #f5d0fe; }
+    .theme-s9 .visual-focus-bar { border-left-color: #c026d3; }
+    .theme-s9 .speech-box { background: #fdf4ff; border-left-color: #c026d3; }
+    .theme-s9 mark { background: #f5d0fe; color: #701a75; }
+    .theme-s9 .action-pill { background: #c026d3; color: #ffffff; }
+
+    /* DEMO AO VIVO: CORAL VIVO (#f97316) [Alerta & Ação] */
+    .theme-demo {
+      border-left: 6px solid #f97316;
+    }
+    .theme-demo .card-title { color: #ea580c; }
+    .theme-demo .card-timer-pill { background: #ffedd5; color: #c2410c; }
+    .theme-demo .bullet { color: #f97316; }
+    .theme-demo .speaker-badge { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
+    .theme-demo .visual-focus-bar { border-left-color: #f97316; }
+    .theme-demo .speech-box { background: #fff7ed; border-left-color: #f97316; }
+    .theme-demo mark { background: #fed7aa; color: #7c2d12; }
+    .theme-demo .action-pill { background: #ea580c; color: #ffffff; }
+
+    /* SLIDE 10: AZUL MARINHO / NAVY (#1e3a8a) [Backup Acadêmico] */
+    .theme-s10 {
+      border-left: 6px solid #1e3a8a;
+    }
+    .theme-s10 .card-title { color: #1e3a8a; }
+    .theme-s10 .card-timer-pill { background: #e0e7ff; color: #3730a3; }
+    .theme-s10 .bullet { color: #1e3a8a; }
+    .theme-s10 .speaker-badge { background: #eef2ff; color: #312e81; border: 1px solid #c7d2fe; }
+    .theme-s10 .visual-focus-bar { border-left-color: #1e3a8a; }
+    .theme-s10 .speech-box { background: #eef2ff; border-left-color: #1e3a8a; }
+    .theme-s10 mark { background: #c7d2fe; color: #1e1b4b; }
+    .theme-s10 .action-pill { background: #1e3a8a; color: #ffffff; }
+
+    /* PRINT RULES */
+    @media print {
+      body {
+        background-color: transparent;
+        padding: 0;
+      }
+      .cue-card {
+        box-shadow: none;
+        border: 1px solid #cbd5e1;
+      }
+      .header-card, .footer-card {
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- CABEÇALHO EXECUTIVO -->
+    <div class="header-card">
+      <div class="header-top">
+        <div>
+          <div class="header-title">TIMETABLING — DEFESA ACADÊMICA & PITCH DE ENGENHARIA</div>
+          <div class="header-subtitle">Abordagem Heurística Desacoplada sob o Modelo Curriculum-Based Course Timetabling (CB-CTT)</div>
+        </div>
+        <div class="badge-time-total">⏱️ TEMPO LIMITE: 08:30 + DEMO</div>
+      </div>
+      <div class="header-meta">
+        <div><strong>👤 Oradores:</strong> Kauê Loreno & Pedro Henrique</div>
+        <div><strong>🎓 Orientador:</strong> Prof. Thailan (UGB)</div>
+        <div><strong>🎯 Meta:</strong> 08 min de Pitch + 04 min de Demo ao Vivo</div>
+      </div>
+    </div>
+
+    <!-- SLIDE 1: ABERTURA (AZUL COBALTO) -->
+    <div class="cue-card theme-s1">
+      <div class="card-top">
+        <div class="card-title">
+          <span>[Slide 01/10]</span> Abertura & Proposta de Valor
+        </div>
+        <div class="card-timer-pill">⏱️ 00:00 ➔ 00:45 (45s)</div>
+      </div>
+      <ul class="meta-list">
+        <li><span class="bullet">•</span> <strong>Orador:</strong> <span class="speaker-badge">KAUÊ LORENO (TECH LEAD)</span></li>
+        <li><span class="bullet">•</span> <strong>Tempo:</strong> 45s acumulados (00:00 - 00:45)</li>
+        <li>
+          <span class="bullet">•</span> <strong>Foco Visual:</strong>
+          <span class="visual-focus-bar">Grade colorida curricular projetada, nomes dos autores, curso Engenharia de Software UGB e orientador.</span>
+        </li>
+        <li><span class="bullet">•</span> <strong>Fala de Kauê Loreno:</strong></li>
+      </ul>
+      <div class="speech-box">
+        "Boa noite a todos os presentes, professor orientador <mark>Thailan</mark> e membros da banca avaliadora. Quantos de vocês já viram um coordenador de curso trancado em uma sala no início do semestre, cercado de cartolinas, planilhas infinitas de Excel e xícaras de café frio? O que parece um simples quebra-cabeça de encaixar horários na verdade é um dos problemas computacionais mais complexos e exaustivos do meio acadêmico. Meu nome é <mark>Kauê Loreno</mark>, junto ao <mark>Pedro Henrique</mark>, e nós desenvolvemos o <mark>TimeTabling</mark>: uma solução que une <mark>modelagem matemática formal</mark>, heurística desacoplada de alto desempenho e uma interface web moderna para devolver o tempo da gestão pedagógica à educação."
+      </div>
+      <div class="action-container">
+        <span>• Ação:</span>
+        <span class="action-pill">AVANÇAR SLIDE NO CLIQUE ➔ [SLIDE 02]</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 2: O CAOS (LARANJA TANGERINA) -->
+    <div class="cue-card theme-s2">
+      <div class="card-top">
+        <div class="card-title">
+          <span>[Slide 02/10]</span> O Desafio da Grade Manual (A Dor Real)
+        </div>
+        <div class="card-timer-pill">⏱️ 00:45 ➔ 02:00 (75s)</div>
+      </div>
+      <ul class="meta-list">
+        <li><span class="bullet">•</span> <strong>Orador:</strong> <span class="speaker-badge">KAUÊ LORENO</span></li>
+        <li><span class="bullet">•</span> <strong>Tempo:</strong> 75 segundos (Acumulado: 02:00)</li>
+        <li>
+          <span class="bullet">•</span> <strong>Foco Visual:</strong>
+          <span class="visual-focus-bar">A coordenadora pedagógica desesperada no turbilhão de papéis voando, blocos vermelhos de colisão e alerta de perigo.</span>
+        </li>
+        <li><span class="bullet">•</span> <strong>Fala de Kauê Loreno:</strong></li>
+      </ul>
+      <div class="speech-box">
+        "Esta imagem não é uma caricatura; ela é o retrato exato do que ocorre a cada seis meses nas instituições de ensino. Montar a grade de aulas à mão consome de <mark>2 a 3 semanas de trabalho exaustivo</mark> da coordenação. E o perigo real reside no <mark>efeito dominó</mark>: se na véspera do início das aulas um professor avisa que não pode lecionar na terça-feira à noite, ajustar uma única aula exige rever e desmontar a alocação de outros quatro docentes em cadeia. O resultado dessa sobrecarga são as famosas <mark>janelas ociosas</mark> — professores com duas ou três horas vagas entre aulas sem remuneração —, o que <mark>Tardif e Lessard (2014)</mark> apontam como um dos maiores catalisadores de estresse e precarização do trabalho docente. O cérebro humano não foi feito para resolver combinações dessa magnitude no papel."
+      </div>
+      <div class="action-container">
+        <span>• Ação:</span>
+        <span class="action-pill">AVANÇAR SLIDE NO CLIQUE ➔ [SLIDE 03]</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 3: OBJETIVOS (VERDE ESMERALDA) -->
+    <div class="cue-card theme-s3">
+      <div class="card-top">
+        <div class="card-title">
+          <span>[Slide 03/10]</span> Objetivos Verificáveis de Engenharia
+        </div>
+        <div class="card-timer-pill">⏱️ 02:00 ➔ 03:00 (60s)</div>
+      </div>
+      <ul class="meta-list">
+        <li><span class="bullet">•</span> <strong>Orador:</strong> <span class="speaker-badge">PEDRO HENRIQUE (FRONTEND & PRODUTO)</span></li>
+        <li><span class="bullet">•</span> <strong>Tempo:</strong> 60 segundos (Acumulado: 03:00)</li>
+        <li>
+          <span class="bullet">•</span> <strong>Foco Visual:</strong>
+          <span class="visual-focus-bar">Os 4 pilares sequenciais e objetivos verificáveis: 1. Modelar, 2. Implementar, 3. Validar e 4. Disponibilizar.</span>
+        </li>
+        <li><span class="bullet">•</span> <strong>Fala de Pedro Henrique:</strong></li>
+      </ul>
+      <div class="speech-box">
+        "Para responder a esse abismo operacional com maturidade técnica, nossa equipe traçou quatro objetivos de engenharia estritamente verificáveis sob o modelo internacional <mark>CB-CTT (Curriculum-Based Course Timetabling)</mark>. Primeiro: <mark>Modelar</mark> formalmente entidades e restrições curriculares por coortes, impedindo que turmas inteiras tenham disciplinas sobrepostas. Segundo: <mark>Implementar</mark> um motor desacoplado de alta performance com consulta de colisões em tempo de execução. Terceiro: <mark>Validar</mark> a viabilidade matemática e os tempos de convergência sob cenários de estresse combinatório. E quarto: <mark>Disponibilizar</mark> uma aplicação web completa e funcional na nuvem para uso direto pelos gestores acadêmicos."
+      </div>
+      <div class="action-container">
+        <span>• Ação:</span>
+        <span class="action-pill">AVANÇAR SLIDE NO CLIQUE ➔ [SLIDE 04]</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 4: A VIRADA (VIOLETA / PÚRPURA) -->
+    <div class="cue-card theme-s4">
+      <div class="card-top">
+        <div class="card-title">
+          <span>[Slide 04/10]</span> Da Demanda à Grade (A Virada Emocional)
+        </div>
+        <div class="card-timer-pill">⏱️ 03:00 ➔ 04:00 (60s)</div>
+      </div>
+      <ul class="meta-list">
+        <li><span class="bullet">•</span> <strong>Orador:</strong> <span class="speaker-badge">PEDRO HENRIQUE</span></li>
+        <li><span class="bullet">•</span> <strong>Tempo:</strong> 60 segundos (Acumulado: 04:00)</li>
+        <li>
+          <span class="bullet">•</span> <strong>Foco Visual:</strong>
+          <span class="visual-focus-bar">A mesma coordenadora agora serena e sorridente, blocos organizados em harmonia na grade ao fundo, selos '100% Prático' e 'Zero Colisões'.</span>
+        </li>
+        <li><span class="bullet">•</span> <strong>Fala de Pedro Henrique:</strong></li>
+      </ul>
+      <div class="speech-box">
+        "Reparem no contraste imediato com o cenário anterior. É exatamente este sentimento de paz e controle que o TimeTabling entrega à gestão escolar. O processo antes caótico foi resumido em três passos lógicos e limpos: <mark>Passo 1: Você informa</mark> a matriz de disciplinas e as disponibilidades dos professores. <mark>Passo 2: O motor organiza</mark> as alocações processando as dezenas de regras do modelo de forma autônoma. <mark>Passo 3: A grade vem pronta</mark> na tela, sem qualquer conflito, para conferência final e homologação da diretoria. Transformamos semanas de angústia em uma experiência <mark>100% prática e com zero colisões</mark>."
+      </div>
+      <div class="action-container">
+        <span>• Ação:</span>
+        <span class="action-pill">PASSAR A PALAVRA PARA KAUÊ ➔ AVANÇAR [SLIDE 05]</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 5: ALGORITMO (DOURADO SOLAR / ÂMBAR) -->
+    <div class="cue-card theme-s5">
+      <div class="card-top">
+        <div class="card-title">
+          <span>[Slide 05/10]</span> Modelagem Formal & Heurística DSatur
+        </div>
+        <div class="card-timer-pill">⏱️ 04:00 ➔ 05:15 (75s)</div>
+      </div>
+      <ul class="meta-list">
+        <li><span class="bullet">•</span> <strong>Orador:</strong> <span class="speaker-badge">KAUÊ LORENO (MOTOR & ALGORITMOS)</span></li>
+        <li><span class="bullet">•</span> <strong>Tempo:</strong> 75 segundos (Acumulado: 05:15)</li>
+        <li>
+          <span class="bullet">•</span> <strong>Foco Visual:</strong>
+          <span class="visual-focus-bar">Diagrama do modelo CB-CTT (Rígidas vs Flexíveis) conectado ao fluxo DSatur com estratégia Fail-First.</span>
+        </li>
+        <li><span class="bullet">•</span> <strong>Fala de Kauê Loreno:</strong></li>
+      </ul>
+      <div class="speech-box">
+        "Por baixo do capô, enfrentamos um problema matematicamente <mark>NP-difícil</mark>. Em um cenário real, o espaço combinatório bruto atinge a ordem de <mark>10³⁵⁰ combinações possíveis</mark>, superando o número de átomos do universo observável e inviabilizando qualquer busca por força bruta. Dividimos as regras entre <mark>Restrições Rígidas</mark> — invioláveis, como impedir choque de horários de um professor ou turma — e <mark>Restrições Flexíveis</mark>, que minimizam janelas ociosas. Para resolver a grade com agilidade extrema, projetamos uma heurística construtiva inspirada no algoritmo <mark>DSatur</mark> aliada à filosofia <mark>Fail-First</mark>. O motor ordena as demandas alocando primeiro os casos de maior criticidade — como professores com agendas ultra-restritas. Ao resolver os gargalos difíceis no início, as demais disciplinas encontram seus espaços naturalmente e sem becos sem saída."
+      </div>
+      <div class="action-container">
+        <span>• Ação:</span>
+        <span class="action-pill">AVANÇAR SLIDE NO CLIQUE ➔ [SLIDE 06]</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 6: ARQUITETURA (CIANO / TURQUESA) -->
+    <div class="cue-card theme-s6">
+      <div class="card-top">
+        <div class="card-title">
+          <span>[Slide 06/10]</span> Arquitetura de Software & GridState em RAM
+        </div>
+        <div class="card-timer-pill">⏱️ 05:15 ➔ 06:15 (60s)</div>
+      </div>
+      <ul class="meta-list">
+        <li><span class="bullet">•</span> <strong>Orador:</strong> <span class="speaker-badge">KAUÊ LORENO</span></li>
+        <li><span class="bullet">•</span> <strong>Tempo:</strong> 60 segundos (Acumulado: 06:15)</li>
+        <li>
+          <span class="bullet">•</span> <strong>Foco Visual:</strong>
+          <span class="visual-focus-bar">Stack tecnológica: React 18, Django REST, PostgreSQL 16, Docker e o container central GridState destacado na memória RAM.</span>
+        </li>
+        <li><span class="bullet">•</span> <strong>Fala de Kauê Loreno:</strong></li>
+      </ul>
+      <div class="speech-box">
+        "Uma heurística eficiente exige uma infraestrutura que não crie gargalos. Adotamos frontend em <mark>React 18</mark>, backend via <mark>API Django REST</mark>, banco relacional <mark>PostgreSQL 16</mark> e conteinerização completa em <mark>Docker</mark> na nuvem Microsoft Azure. Mas a grande decisão arquitetural está no <mark>GridState</mark>. Softwares lentos de timetabling cometem o erro de realizar queries no banco de dados a cada teste de encaixe de aula. Nós isolamos a computação: o motor carrega as entradas em matrizes de ocupação em <mark>memória RAM</mark>, permitindo checagens de colisão em tempo constante <mark>O(1)</mark>. Não há I/O de disco no loop crítico, o que desacopla os dados da execução e viabiliza testar múltiplos cenários instantaneamente."
+      </div>
+      <div class="action-container">
+        <span>• Ação:</span>
+        <span class="action-pill">AVANÇAR SLIDE NO CLIQUE ➔ [SLIDE 07]</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 7: RESULTADOS (VERMELHO RUBI) -->
+    <div class="cue-card theme-s7">
+      <div class="card-top">
+        <div class="card-title">
+          <span>[Slide 07/10]</span> Resultados no Cenário Validado
+        </div>
+        <div class="card-timer-pill">⏱️ 06:15 ➔ 07:15 (60s)</div>
+      </div>
+      <ul class="meta-list">
+        <li><span class="bullet">•</span> <strong>Orador:</strong> <span class="speaker-badge">KAUÊ LORENO</span></li>
+        <li><span class="bullet">•</span> <strong>Tempo:</strong> 60 segundos (Acumulado: 07:15)</li>
+        <li>
+          <span class="bullet">•</span> <strong>Foco Visual:</strong>
+          <span class="visual-focus-bar">Destaque para as métricas da massa: 14 turmas, 50 professores, 275 bloqueios e os números em caixa alta: '0 COLISÕES' e '0,08 s'.</span>
+        </li>
+        <li><span class="bullet">•</span> <strong>Fala de Kauê Loreno:</strong></li>
+      </ul>
+      <div class="speech-box">
+        "Para validar a robustez da solução, submetemos o motor a uma massa de testes homologada contendo <mark>14 turmas curriculares ativas</mark>, <mark>50 professores</mark> e nada menos que <mark>275 bloqueios de disponibilidade docente</mark>. O resultado obtido foi de estritas <mark>zero colisões rígidas</mark>: nenhuma sobreposição de horário ou turma foi admitida. E o tempo de processamento do motor foi de impressionantes <mark>0,08 segundos</mark>. O que antes exigia semanas de exaustão mental é solucionado em milissegundos. E ressaltamos nosso rigor científico: essa validação ocorreu sobre massa de testes teórica projetada especificamente para tensionar o espaço combinatório."
+      </div>
+      <div class="action-container">
+        <span>• Ação:</span>
+        <span class="action-pill">PASSAR A PALAVRA PARA PEDRO ➔ AVANÇAR [SLIDE 08]</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 8: LIMITAÇÕES & PRÓXIMOS PASSOS (VERDE FLORESTA) -->
+    <div class="cue-card theme-s8">
+      <div class="card-top">
+        <div class="card-title">
+          <span>[Slide 08/10]</span> Limitações & Visão de Futuro
+        </div>
+        <div class="card-timer-pill">⏱️ 07:15 ➔ 08:00 (45s)</div>
+      </div>
+      <ul class="meta-list">
+        <li><span class="bullet">•</span> <strong>Orador:</strong> <span class="speaker-badge">PEDRO HENRIQUE</span></li>
+        <li><span class="bullet">•</span> <strong>Tempo:</strong> 45 segundos (Acumulado: 08:00)</li>
+        <li>
+          <span class="bullet">•</span> <strong>Foco Visual:</strong>
+          <span class="visual-focus-bar">Trilha de evolução: Entregue ➔ Próximo Passo ➔ Futuro e as caixas reflexivas sobre os limites da validação e heurística.</span>
+        </li>
+        <li><span class="bullet">•</span> <strong>Fala de Pedro Henrique:</strong></li>
+      </ul>
+      <div class="speech-box">
+        "Como engenheiros de software, temos compromisso com a transparência: sabemos exatamente a fronteira do que foi construído e o roadmap à frente. A geração da grade no cenário homologado foi entregue com sucesso. O nosso próximo passo é estender os testes para <mark>dados empíricos institucionais</mark> e acoplar técnicas de refinamento de janelas via meta-heurísticas. Na ciência da computação, assumimos um princípio essencial de engenharia: <mark>'Uma solução viável e de boa qualidade entregue hoje é infinitamente melhor do que uma solução teoricamente perfeita que nunca roda.'</mark> O TimeTabling entrega valor real e imediato."
+      </div>
+      <div class="action-container">
+        <span>• Ação:</span>
+        <span class="action-pill">AVANÇAR SLIDE NO CLIQUE ➔ [SLIDE 09]</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 9: FECHAMENTO & CALL TO DEMO (MAGENTA) -->
+    <div class="cue-card theme-s9">
+      <div class="card-top">
+        <div class="card-title">
+          <span>[Slide 09/10]</span> Menos Burocracia. Mais Educação.
+        </div>
+        <div class="card-timer-pill">⏱️ 08:00 ➔ 08:30 (30s)</div>
+      </div>
+      <ul class="meta-list">
+        <li><span class="bullet">•</span> <strong>Orador:</strong> <span class="speaker-badge">KAUÊ LORENO & PEDRO HENRIQUE</span></li>
+        <li><span class="bullet">•</span> <strong>Tempo:</strong> 30 segundos (Acumulado: 08:30)</li>
+        <li>
+          <span class="bullet">•</span> <strong>Foco Visual:</strong>
+          <span class="visual-focus-bar">A coordenadora apontando com autoridade para o notebook com a grade gerada na tela, slogan do projeto e o botão destacado: 'DEMO AO VIVO ➔'.</span>
+        </li>
+        <li><span class="bullet">•</span> <strong>Fala de Fechamento Conjunto:</strong></li>
+      </ul>
+      <div class="speech-box">
+        "O nosso propósito com este projeto vai muito além do código: ele devolve a tranquilidade e a dignidade ao cotidiano pedagógico. O nosso compromisso é: <mark>Menos Burocracia. Mais Educação.</mark> E para provar que este motor está vivo, conectado e pronto para uso real, convidamos a banca a acompanhar agora a nossa <mark>Demonstração Prática ao Vivo</mark>!"
+      </div>
+      <div class="action-container">
+        <span>• Ação:</span>
+        <span class="action-pill">ABRIR O NAVEGADOR NA TELA DO SISTEMA (DEMO AO VIVO)</span>
+      </div>
+    </div>
+
+    <!-- CARD EXTRA: DEMO AO VIVO (CORAL VIVO) -->
+    <div class="cue-card theme-demo">
+      <div class="card-top">
+        <div class="card-title">
+          <span>[DEMONSTRAÇÃO AO VIVO]</span> Roteiro Operacional de Navegação
+        </div>
+        <div class="card-timer-pill">⏱️ 08:30 ➔ 12:30 (~04 min)</div>
+      </div>
+      <ul class="meta-list">
+        <li><span class="bullet">•</span> <strong>Oradores:</strong> <span class="speaker-badge">PEDRO (NAVEGAÇÃO UI)</span> &amp; <span class="speaker-badge">KAUÊ (EXPLICAÇÃO DO MOTOR)</span></li>
+        <li><span class="bullet">•</span> <strong>Tempo:</strong> ~4 minutos dedicados à demonstração dinâmica e perguntas</li>
+        <li>
+          <span class="bullet">•</span> <strong>Foco Visual:</strong>
+          <span class="visual-focus-bar">Interface Web do TimeTabling aberta no navegador (React + Django REST).</span>
+        </li>
+        <li><span class="bullet">•</span> <strong>Passo a Passo da Demo:</strong></li>
+      </ul>
+      <div class="speech-box">
+        "1. <mark>Visualização de Entidades:</mark> Pedro exibe as telas de cadastro de professores, disponibilidades e matrizes curriculares. Mostre os 275 bloqueios docentes carregados.<br>
+        2. <mark>O Disparo do Motor:</mark> Clique no botão 'Gerar Grade Horária'. Destaque a resposta instantânea (< 1 segundo na rede).<br>
+        3. <mark>Inspeção Visual da Grade:</mark> Navegue pelas abas de turmas e de docentes. Mostre que não há conflito algum em nenhum dos 25 slots semanais.<br>
+        4. <mark>Conclusão e Agradecimento:</mark> Agradeçam ao orientador Prof. Thailan, parabenizem a banca pela atenção e declarem a sessão aberta para arguição."
+      </div>
+      <div class="action-container">
+        <span>• Ação:</span>
+        <span class="action-pill">PROJETAR O SLIDE 10 DE REFERÊNCIAS DURANTE AS PERGUNTAS</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 10: REFERÊNCIAS BIBLIOGRÁFICAS (AZUL MARINHO) -->
+    <div class="cue-card theme-s10">
+      <div class="card-top">
+        <div class="card-title">
+          <span>[Slide 10/10]</span> Referências Bibliográficas (Blindagem Acadêmica)
+        </div>
+        <div class="card-timer-pill">⏱️ RETAGUARDA (BACKUP)</div>
+      </div>
+      <ul class="meta-list">
+        <li><span class="bullet">•</span> <strong>Finalidade:</strong> <span class="speaker-badge">SUPORTE TÉCNICO DURANTE A ARGUIÇÃO DA BANCA</span></li>
+        <li>
+          <span class="bullet">•</span> <strong>Foco Visual:</strong>
+          <span class="visual-focus-bar">Lista de referências em formato ABNT NBR 6023 (Brélaz, Burke, Carter, Even et al., Karp, Kirkpatrick, Lewis, Metropolis, Tardif &amp; Lessard).</span>
+        </li>
+        <li><span class="bullet">•</span> <strong>Diretriz de Palco:</strong></li>
+      </ul>
+      <div class="speech-box">
+        "Este slide não deve ser lido. Deve permanecer projetado em segundo plano durante a sessão de perguntas da banca avaliadora. Ele atesta visualmente que cada decisão algorítmica — do <mark>DSatur (Brélaz, 1979)</mark> à formulação de complexidade <mark>(Even, Itai e Shamir, 1976)</mark> e à sociologia do trabalho docente <mark>(Tardif e Lessard, 2014)</mark> — está solidamente amparada na literatura internacional."
+      </div>
+      <div class="action-container">
+        <span>• Ação:</span>
+        <span class="action-pill">MANTER NA TELA ENQUANTO RESPONDE À BANCA</span>
+      </div>
+    </div>
+
+    <!-- CHECKLIST DE OURO FOOTER -->
+    <div class="footer-card">
+      <div class="footer-title">
+        <span>🛡️ CHECKLIST DE OURO — RITUAL PRÉ-APRESENTAÇÃO (15 MINUTOS ANTES)</span>
+      </div>
+      <div class="checklist-grid">
+        <div class="checklist-col">
+          <h4>1. Hardware & Conexões</h4>
+          <ul>
+            <li><span class="checklist-box"></span> Notebook conectado à tomada de energia</li>
+            <li><span class="checklist-box"></span> Saída HDMI/Projetor testada e duplicada</li>
+            <li><span class="checklist-box"></span> Passador de slides com pilha nova</li>
+            <li><span class="checklist-box"></span> Garrafa de água aberta e ao alcance</li>
+          </ul>
+        </div>
+        <div class="checklist-col">
+          <h4>2. Software & Demo</h4>
+          <ul>
+            <li><span class="checklist-box"></span> Backend Django ativo e respondendo na porta local</li>
+            <li><span class="checklist-box"></span> Frontend React aberto em aba limpa (sem favoritos)</li>
+            <li><span class="checklist-box"></span> Modo 'Não Perturbe' do Windows ativado</li>
+            <li><span class="checklist-box"></span> Apresentação PPTX aberta no modo apresentação</li>
+          </ul>
+        </div>
+        <div class="checklist-col">
+          <h4>3. Postura & Oratória</h4>
+          <ul>
+            <li><span class="checklist-box"></span> Olhar distribuído entre todos os membros da banca</li>
+            <li><span class="checklist-box"></span> Pausa dramática cravada após falar '0,08 segundos'</li>
+            <li><span class="checklist-box"></span> Gestos abertos e voz projetada no Slide 04</li>
+            <li><span class="checklist-box"></span> Cronômetro do celular posicionado no púlpito</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

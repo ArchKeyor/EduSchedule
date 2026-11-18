@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" width="960" height="480">
+  <defs>
+    <style>
+      .bg { fill: #0f172a; }
+      .box { rx: 8; ry: 8; stroke-width: 2; }
+      .title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 20px; font-weight: bold; fill: #ffffff; text-anchor: middle; }
+      .subtitle { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; fill: #94a3b8; text-anchor: middle; }
+      .step-num { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 12px; font-weight: bold; fill: #38bdf8; letter-spacing: 0.1em; }
+      .step-title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; font-weight: bold; fill: #f8fafc; }
+      .step-desc { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 11.5px; fill: #cbd5e1; line-height: 1.4; }
+      .arrow { stroke: #38bdf8; stroke-width: 2.5; fill: none; stroke-linecap: round; }
+      .arrow-head { fill: #38bdf8; }
+      .badge-crit { fill: #ef4444; font-size: 10px; font-weight: bold; font-family: sans-serif; }
+    </style>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" class="arrow-head" />
+    </marker>
+  </defs>
+
+  <!-- Fundo Dark -->
+  <rect width="960" height="480" class="bg" />
+
+  <!-- Cabeçalho -->
+  <text x="480" y="42" class="title">PIPELINE DA HEURÍSTICA CONSTRUTIVA: PRINCÍPIO FAIL-FIRST</text>
+  <text x="480" y="65" class="subtitle">Como o DSatur ordena e aloca aulas na memória RAM para garantir zero conflitos rígidos em milissegundos</text>
+
+  <!-- ETAPA 1: Demandas Brutas -->
+  <g transform="translate(40, 100)">
+    <rect width="180" height="280" fill="#1e293b" stroke="#334155" class="box" />
+    <rect x="0" y="0" width="180" height="38" fill="#334155" rx="8" ry="8" />
+    <rect x="0" y="26" width="180" height="12" fill="#334155" />
+    <text x="14" y="24" class="step-num">PASSO 1</text>
+    <text x="75" y="24" class="step-title">Matriz Curricular</text>
+
+    <!-- Itens não ordenados -->
+    <rect x="14" y="55" width="152" height="42" fill="#0f172a" stroke="#475569" rx="5" />
+    <text x="22" y="73" class="step-desc" font-weight="bold">Turma A • Hist (2h)</text>
+    <text x="22" y="88" class="step-desc" fill="#94a3b8">Prof. Carlos (Livre 20h)</text>
+
+    <rect x="14" y="108" width="152" height="42" fill="#450a0a" stroke="#dc2626" rx="5" />
+    <text x="22" y="126" class="step-desc" font-weight="bold" fill="#fca5a5">Turma A • Fís (4h)</text>
+    <text x="22" y="141" class="step-desc" fill="#f87171">Prof. João (Só 4h livres!)</text>
+
+    <rect x="14" y="161" width="152" height="42" fill="#0f172a" stroke="#475569" rx="5" />
+    <text x="22" y="179" class="step-desc" font-weight="bold">Turma B • Mat (5h)</text>
+    <text x="22" y="194" class="step-desc" fill="#94a3b8">Prof. Marcos (Livre 15h)</text>
+
+    <text x="90" y="235" font-family="sans-serif" font-size="11" fill="#64748b" text-anchor="middle">Lista desordenada de aulas</text>
+    <text x="90" y="252" font-family="sans-serif" font-size="10.5" fill="#ef4444" text-anchor="middle">⚠️ Risco alto de bloqueio!</text>
+  </g>
+
+  <!-- Seta 1 -> 2 -->
+  <line x1="225" y1="240" x2="265" y2="240" class="arrow" marker-end="url(#arrowhead)" />
+
+  <!-- ETAPA 2: Cálculo de Criticidade -->
+  <g transform="translate(275, 100)">
+    <rect width="180" height="280" fill="#1e293b" stroke="#3b82f6" class="box" />
+    <rect x="0" y="0" width="180" height="38" fill="#1d4ed8" rx="8" ry="8" />
+    <rect x="0" y="26" width="180" height="12" fill="#1d4ed8" />
+    <text x="14" y="24" class="step-num" fill="#bfdbfe">PASSO 2</text>
+    <text x="75" y="24" class="step-title">Grau de Saturação</text>
+
+    <text x="90" y="68" font-family="sans-serif" font-size="12" font-weight="bold" fill="#38bdf8" text-anchor="middle">Fórmula de Criticidade</text>
+    
+    <rect x="12" y="78" width="156" height="44" fill="#0f172a" stroke="#1e3a8a" rx="5" />
+    <text x="90" y="96" font-family="monospace" font-size="11" fill="#93c5fd" text-anchor="middle">W(r) = α·CH + β·(1-Disp)</text>
+    <text x="90" y="112" font-family="sans-serif" font-size="9.5" fill="#60a5fa" text-anchor="middle">Pesa carga e bloqueios</text>
+
+    <text x="14" y="145" class="step-desc" font-weight="bold">Classificação dos Professores:</text>
+    
+    <rect x="12" y="155" width="156" height="32" fill="#7f1d1d" rx="4" />
+    <text x="18" y="175" font-family="sans-serif" font-size="11" fill="#fecaca">1º Prof. João &rarr; Peso: 95/100</text>
+
+    <rect x="12" y="193" width="156" height="32" fill="#0f172a" rx="4" />
+    <text x="18" y="213" font-family="sans-serif" font-size="11" fill="#cbd5e1">2º Prof. Marcos &rarr; Peso: 65</text>
+
+    <rect x="12" y="231" width="156" height="32" fill="#0f172a" rx="4" />
+    <text x="18" y="251" font-family="sans-serif" font-size="11" fill="#cbd5e1">3º Prof. Carlos &rarr; Peso: 25</text>
+  </g>
+
+  <!-- Seta 2 -> 3 -->
+  <line x1="460" y1="240" x2="500" y2="240" class="arrow" marker-end="url(#arrowhead)" />
+
+  <!-- ETAPA 3: Fila Ordenada Fail-First -->
+  <g transform="translate(510, 100)">
+    <rect width="180" height="280" fill="#1e293b" stroke="#f59e0b" class="box" />
+    <rect x="0" y="0" width="180" height="38" fill="#b45309" rx="8" ry="8" />
+    <rect x="0" y="26" width="180" height="12" fill="#b45309" />
+    <text x="14" y="24" class="step-num" fill="#fde68a">PASSO 3</text>
+    <text x="75" y="24" class="step-title">Fila "Fail-First"</text>
+
+    <text x="90" y="65" font-family="sans-serif" font-size="11" fill="#fbbf24" text-anchor="middle">Quem tem menos slots</text>
+    <text x="90" y="80" font-family="sans-serif" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">É ALOCADO PRIMEIRO!</text>
+
+    <!-- Fila ordenada com badge -->
+    <rect x="14" y="95" width="152" height="46" fill="#78350f" stroke="#f59e0b" rx="5" />
+    <text x="22" y="114" class="step-desc" font-weight="bold" fill="#fef3c7">1. Física (João)</text>
+    <text x="22" y="130" class="step-desc" fill="#fde68a">Aloca antes que esgote!</text>
+
+    <rect x="14" y="150" width="152" height="42" fill="#0f172a" stroke="#475569" rx="5" />
+    <text x="22" y="168" class="step-desc" font-weight="bold">2. Matemática (Marcos)</text>
+    <text x="22" y="183" class="step-desc" fill="#94a3b8">Aloca intermediário</text>
+
+    <rect x="14" y="200" width="152" height="42" fill="#0f172a" stroke="#475569" rx="5" />
+    <text x="22" y="218" class="step-desc" font-weight="bold">3. História (Carlos)</text>
+    <text x="22" y="233" class="step-desc" fill="#94a3b8">Fácil de encaixar no final</text>
+  </g>
+
+  <!-- Seta 3 -> 4 -->
+  <line x1="695" y1="240" x2="735" y2="240" class="arrow" marker-end="url(#arrowhead)" />
+
+  <!-- ETAPA 4: Preenchimento do Grid em RAM -->
+  <g transform="translate(745, 100)">
+    <rect width="180" height="280" fill="#1e293b" stroke="#10b981" class="box" />
+    <rect x="0" y="0" width="180" height="38" fill="#047857" rx="8" ry="8" />
+    <rect x="0" y="26" width="180" height="12" fill="#047857" />
+    <text x="14" y="24" class="step-num" fill="#a7f3d0">PASSO 4</text>
+    <text x="75" y="24" class="step-title">Grid em Memória</text>
+
+    <!-- Mini Grid semanal 5x3 -->
+    <text x="90" y="65" font-family="sans-serif" font-size="11" font-weight="bold" fill="#34d399" text-anchor="middle">Matriz RAM: GridState</text>
+    
+    <g transform="translate(20, 78)">
+      <!-- Cabeçalho Seg Ter Qua Qui Sex -->
+      <text x="8" y="10" font-family="sans-serif" font-size="9" fill="#94a3b8">S</text>
+      <text x="36" y="10" font-family="sans-serif" font-size="9" fill="#94a3b8">T</text>
+      <text x="64" y="10" font-family="sans-serif" font-size="9" fill="#94a3b8">Q</text>
+      <text x="92" y="10" font-family="sans-serif" font-size="9" fill="#94a3b8">Q</text>
+      <text x="120" y="10" font-family="sans-serif" font-size="9" fill="#94a3b8">S</text>
+
+      <!-- Linha 1 -->
+      <rect x="0" y="16" width="24" height="20" fill="#dc2626" rx="3" /><text x="4" y="30" font-size="8" fill="#fff" font-weight="bold">FÍS</text>
+      <rect x="28" y="16" width="24" height="20" fill="#dc2626" rx="3" /><text x="32" y="30" font-size="8" fill="#fff" font-weight="bold">FÍS</text>
+      <rect x="56" y="16" width="24" height="20" fill="#2563eb" rx="3" /><text x="60" y="30" font-size="8" fill="#fff">MAT</text>
+      <rect x="84" y="16" width="24" height="20" fill="#2563eb" rx="3" /><text x="88" y="30" font-size="8" fill="#fff">MAT</text>
+      <rect x="112" y="16" width="24" height="20" fill="#16a34a" rx="3" /><text x="116" y="30" font-size="8" fill="#fff">HIS</text>
+
+      <!-- Linha 2 -->
+      <rect x="0" y="40" width="24" height="20" fill="#475569" rx="3" />
+      <rect x="28" y="40" width="24" height="20" fill="#475569" rx="3" />
+      <rect x="56" y="40" width="24" height="20" fill="#2563eb" rx="3" /><text x="60" y="54" font-size="8" fill="#fff">MAT</text>
+      <rect x="84" y="40" width="24" height="20" fill="#16a34a" rx="3" /><text x="88" y="54" font-size="8" fill="#fff">HIS</text>
+      <rect x="112" y="40" width="24" height="20" fill="#475569" rx="3" />
+    </g>
+
+    <rect x="12" y="160" width="156" height="52" fill="#064e3b" stroke="#10b981" rx="5" />
+    <text x="90" y="180" font-family="sans-serif" font-size="11.5" font-weight="bold" fill="#a7f3d0" text-anchor="middle">✓ ZERO CHOQUES</text>
+    <text x="90" y="196" font-family="sans-serif" font-size="10" fill="#d1fae5" text-anchor="middle">Execução em &lt; 100 ms!</text>
+
+    <text x="90" y="240" font-family="sans-serif" font-size="10.5" fill="#34d399" font-weight="bold" text-anchor="middle">Entrega o "Warm Start"</text>
+    <text x="90" y="255" font-family="sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">Semente pronta p/ Fase 2</text>
+  </g>
+
+  <!-- Rodapé Explicativo -->
+  <text x="480" y="420" font-family="sans-serif" font-size="13" font-weight="bold" fill="#38bdf8" text-anchor="middle">
+    Moral da História: "Alocar quem tem menos opções no início evita o beco sem saída no final."
+  </text>
+  <text x="480" y="442" font-family="sans-serif" font-size="11.5" fill="#94a3b8" text-anchor="middle">
+    Complexidade O(N log N) da ordenação garante agilidade instantânea antes da metaheurística estocástica.
+  </text>
+</svg>

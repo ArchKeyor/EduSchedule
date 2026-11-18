@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" width="960" height="480">
+  <defs>
+    <style>
+      .bg { fill: #0f172a; }
+      .title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 20px; font-weight: bold; fill: #ffffff; text-anchor: middle; }
+      .subtitle { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; fill: #94a3b8; text-anchor: middle; }
+      .slot-box { rx: 6; ry: 6; stroke-width: 1.5; }
+      .arrow { stroke: #38bdf8; stroke-width: 3; fill: none; }
+      .arrow-curve { stroke: #f59e0b; stroke-width: 3; stroke-dasharray: 6,4; fill: none; }
+    </style>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#38bdf8" />
+    </marker>
+    <marker id="arrow-amber" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#f59e0b" />
+    </marker>
+  </defs>
+
+  <rect width="960" height="480" class="bg" />
+
+  <text x="480" y="42" class="title">OPERADOR DE PERTURBAÇÃO: SWAP MOVE INTRA-TURMA</text>
+  <text x="480" y="65" class="subtitle">Como a troca controlada de horários elimina janelas docentes preservando 100% da carga horária</text>
+
+  <!-- CENÁRIO ANTES: COM JANELA VAGA -->
+  <g transform="translate(60, 100)">
+    <rect width="380" height="280" fill="#1e293b" stroke="#ef4444" rx="8" stroke-width="2" />
+    <rect x="0" y="0" width="380" height="38" fill="#7f1d1d" rx="8" />
+    <rect x="0" y="26" width="380" height="12" fill="#7f1d1d" />
+    <text x="190" y="24" font-family="sans-serif" font-size="14" font-weight="bold" fill="#fecaca" text-anchor="middle">ESTADO ATUAL (Solução com Janela Ociosa)</text>
+
+    <text x="25" y="65" font-family="sans-serif" font-size="12" font-weight="bold" fill="#94a3b8">Grade de Terça-feira (Turma 6º Período):</text>
+
+    <!-- Slots de Terça -->
+    <rect x="25" y="80" width="60" height="75" fill="#1e3a8a" stroke="#3b82f6" class="slot-box" />
+    <text x="55" y="100" font-family="sans-serif" font-size="10" fill="#93c5fd" text-anchor="middle">Slot 1</text>
+    <text x="55" y="122" font-family="sans-serif" font-size="11" font-weight="bold" fill="#fff" text-anchor="middle">FÍSICA</text>
+    <text x="55" y="140" font-family="sans-serif" font-size="9" fill="#bfdbfe" text-anchor="middle">Prof. João</text>
+
+    <!-- Slot 2: JANELA! -->
+    <rect x="95" y="80" width="60" height="75" fill="#450a0a" stroke="#dc2626" class="slot-box" stroke-dasharray="4,2" />
+    <text x="125" y="100" font-family="sans-serif" font-size="10" fill="#fca5a5" text-anchor="middle">Slot 2</text>
+    <text x="125" y="122" font-family="sans-serif" font-size="10.5" font-weight="bold" fill="#f87171" text-anchor="middle">VAGO</text>
+    <text x="125" y="140" font-family="sans-serif" font-size="8.5" fill="#fca5a5" text-anchor="middle">JANELA!</text>
+
+    <!-- Slot 3 -->
+    <rect x="165" y="80" width="60" height="75" fill="#1e3a8a" stroke="#3b82f6" class="slot-box" />
+    <text x="195" y="100" font-family="sans-serif" font-size="10" fill="#93c5fd" text-anchor="middle">Slot 3</text>
+    <text x="195" y="122" font-family="sans-serif" font-size="11" font-weight="bold" fill="#fff" text-anchor="middle">FÍSICA</text>
+    <text x="195" y="140" font-family="sans-serif" font-size="9" fill="#bfdbfe" text-anchor="middle">Prof. João</text>
+
+    <!-- Slot 4: MATEMÁTICA -->
+    <rect x="235" y="80" width="60" height="75" fill="#064e3b" stroke="#10b981" class="slot-box" />
+    <text x="265" y="100" font-family="sans-serif" font-size="10" fill="#a7f3d0" text-anchor="middle">Slot 4</text>
+    <text x="265" y="122" font-family="sans-serif" font-size="11" font-weight="bold" fill="#fff" text-anchor="middle">MAT</text>
+    <text x="265" y="140" font-family="sans-serif" font-size="9" fill="#a7f3d0" text-anchor="middle">Prof. Marcos</text>
+
+    <!-- Slot 5: VAGO -->
+    <rect x="305" y="80" width="50" height="75" fill="#0f172a" stroke="#475569" class="slot-box" />
+    <text x="330" y="122" font-family="sans-serif" font-size="10" fill="#64748b" text-anchor="middle">Livre</text>
+
+    <!-- Diagnóstico da Situação -->
+    <rect x="25" y="175" width="330" height="85" fill="#0f172a" stroke="#7f1d1d" rx="6" />
+    <text x="35" y="198" font-family="sans-serif" font-size="11.5" font-weight="bold" fill="#fca5a5">⚠️ O que está acontecendo aqui?</text>
+    <text x="35" y="218" font-family="sans-serif" font-size="11" fill="#cbd5e1">• Prof. João dá aula no Slot 1 e Slot 3.</text>
+    <text x="35" y="235" font-family="sans-serif" font-size="11" fill="#f87171">• Slot 2 ocioso = 1 HORA VAGA perdida na escola!</text>
+    <text x="35" y="252" font-family="sans-serif" font-size="11" font-weight="bold" fill="#fca5a5">• Penalidade Soft incorrida: +85 pontos de custo.</text>
+  </g>
+
+  <!-- Seta Central de Mutação / Swap -->
+  <g transform="translate(455, 210)">
+    <circle cx="25" cy="25" r="24" fill="#1e293b" stroke="#f59e0b" stroke-width="2" />
+    <text x="25" y="22" font-family="sans-serif" font-size="10" font-weight="bold" fill="#f59e0b" text-anchor="middle">SWAP</text>
+    <text x="25" y="34" font-family="sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">MOVE</text>
+    <path d="M 5,50 C 25,65 25,65 45,50" class="arrow" marker-end="url(#arrow-blue)" />
+  </g>
+
+  <!-- CENÁRIO DEPOIS: OTIMIZADO E COMPACTADO -->
+  <g transform="translate(520, 100)">
+    <rect width="380" height="280" fill="#1e293b" stroke="#10b981" rx="8" stroke-width="2" />
+    <rect x="0" y="0" width="380" height="38" fill="#065f46" rx="8" />
+    <rect x="0" y="26" width="380" height="12" fill="#065f46" />
+    <text x="190" y="24" font-family="sans-serif" font-size="14" font-weight="bold" fill="#a7f3d0" text-anchor="middle">NOVO ESTADO (Após o Swap Move)</text>
+
+    <text x="25" y="65" font-family="sans-serif" font-size="12" font-weight="bold" fill="#94a3b8">Grade Reorganizada (Mesma Turma):</text>
+
+    <!-- Slots Otimizados -->
+    <rect x="25" y="80" width="60" height="75" fill="#1e3a8a" stroke="#3b82f6" class="slot-box" />
+    <text x="55" y="100" font-family="sans-serif" font-size="10" fill="#93c5fd" text-anchor="middle">Slot 1</text>
+    <text x="55" y="122" font-family="sans-serif" font-size="11" font-weight="bold" fill="#fff" text-anchor="middle">FÍSICA</text>
+    <text x="55" y="140" font-family="sans-serif" font-size="9" fill="#bfdbfe" text-anchor="middle">Prof. João</text>
+
+    <!-- Slot 2: FÍSICA GEMINADA! -->
+    <rect x="95" y="80" width="60" height="75" fill="#1e3a8a" stroke="#38bdf8" class="slot-box" stroke-width="2.5" />
+    <text x="125" y="100" font-family="sans-serif" font-size="10" fill="#bae6fd" text-anchor="middle">Slot 2</text>
+    <text x="125" y="122" font-family="sans-serif" font-size="11" font-weight="bold" fill="#38bdf8" text-anchor="middle">FÍSICA</text>
+    <text x="125" y="140" font-family="sans-serif" font-size="9" fill="#bae6fd" text-anchor="middle">Prof. João</text>
+
+    <!-- Slot 3: MATEMÁTICA ANTECIPADA -->
+    <rect x="165" y="80" width="60" height="75" fill="#064e3b" stroke="#10b981" class="slot-box" />
+    <text x="195" y="100" font-family="sans-serif" font-size="10" fill="#a7f3d0" text-anchor="middle">Slot 3</text>
+    <text x="195" y="122" font-family="sans-serif" font-size="11" font-weight="bold" fill="#fff" text-anchor="middle">MAT</text>
+    <text x="195" y="140" font-family="sans-serif" font-size="9" fill="#a7f3d0" text-anchor="middle">Prof. Marcos</text>
+
+    <!-- Slot 4: LIVRE -->
+    <rect x="235" y="80" width="60" height="75" fill="#0f172a" stroke="#475569" class="slot-box" />
+    <text x="265" y="122" font-family="sans-serif" font-size="10" fill="#64748b" text-anchor="middle">Livre</text>
+
+    <!-- Slot 5: LIVRE -->
+    <rect x="305" y="80" width="50" height="75" fill="#0f172a" stroke="#475569" class="slot-box" />
+    <text x="330" y="122" font-family="sans-serif" font-size="10" fill="#64748b" text-anchor="middle">Livre</text>
+
+    <!-- Validação de Sucesso -->
+    <rect x="25" y="175" width="330" height="85" fill="#064e3b" stroke="#10b981" rx="6" />
+    <text x="35" y="198" font-family="sans-serif" font-size="11.5" font-weight="bold" fill="#a7f3d0">✓ Resultado da Perturbação:</text>
+    <text x="35" y="218" font-family="sans-serif" font-size="11" fill="#ecfdf5">• Aulas de Física ficaram consecutivas (geminadas).</text>
+    <text x="35" y="235" font-family="sans-serif" font-size="11" fill="#ecfdf5">• JANELA ELIMINADA! Prof. João sai mais cedo.</text>
+    <text x="35" y="252" font-family="sans-serif" font-size="11" font-weight="bold" fill="#34d399">• Custo Reduzido: Δf = -85 pontos (Melhoria direta!).</text>
+  </g>
+
+  <!-- Rodapé com a Regra de Ouro -->
+  <text x="480" y="420" font-family="sans-serif" font-size="13" font-weight="bold" fill="#f59e0b" text-anchor="middle">
+    Blindagem de Restrições Fortes: "A troca SÓ é aceita se o professor estiver livre no novo slot."
+  </text>
+  <text x="480" y="442" font-family="sans-serif" font-size="11.5" fill="#94a3b8" text-anchor="middle">
+    Se a troca causar choque de professor com outra turma, o movimento é abortado imediatamente (P = 0).
+  </text>
+</svg>

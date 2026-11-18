@@ -1,4 +1,5 @@
 import time
+import math
 import random
 from .constraints import ConstraintEvaluator
 from core.models import (
@@ -159,9 +160,25 @@ class TimetablingSolver:
                 if eval_res['hard_violations'] == 0 and eval_res['viability_score'] >= 98.0:
                     break # Reached high-quality optimal solution
 
+        # 5. Fase 2: Refinamento via Simulated Annealing (Metropolis et al., 1953 / Kirkpatrick et al., 1983)
+        # Otimiza restrições soft (janelas e equilíbrio) via swaps intra-turma preservando Hard = 0
+        if best_assignments:
+            sa_assignments, sa_eval = self._simulated_annealing(
+                initial_assignments=best_assignments,
+                avail_map=avail_map,
+                slots=slots,
+                days=days,
+                classes=classes,
+                max_time_seconds=1.2
+            )
+            # Adota a solução do SA se melhorou ou manteve a qualidade
+            if sa_eval['viability_score'] >= best_eval['viability_score']:
+                best_assignments = sa_assignments
+                best_eval = sa_eval
+
         exec_duration = round(time.time() - start_time, 2)
 
-        # 5. Persist to Database
+        # 6. Persist to Database
         schedule = TimetableSchedule.objects.create(
             name=self.schedule_name,
             semester=self.semester,
@@ -170,7 +187,7 @@ class TimetablingSolver:
             hard_violations_count=best_eval['hard_violations'],
             soft_penalties_score=best_eval['soft_penalty'],
             execution_time_seconds=exec_duration,
-            algorithm_used="Hybrid Constructive Heuristic + Local Constraint Optimization"
+            algorithm_used="Two-Stage Hybrid Solver: Constructive Heuristic + Simulated Annealing (Metropolis)"
         )
 
         # Build quick lookup for soft warnings
@@ -212,3 +229,152 @@ class TimetablingSolver:
             'hard_details': best_eval['hard_details'],
             'soft_details': best_eval['soft_details'],
         }
+
+    def _simulated_annealing(self, initial_assignments, avail_map, slots, days, classes, max_time_seconds=1.2):
+        """
+        Fase 2: Meta-heurística Simulated Annealing (Kirkpatrick et al., 1983 / Metropolis et al., 1953)
+        Refina a solução viável gerada pela Fase 1, minimizando o custo soft (janelas e desequilíbrios)
+        através de movimentos de vizinhança do tipo Swap Intra-Turma, preservando estritamente Hard = 0.
+        """
+        sa_start = time.time()
+        current_assignments = [dict(a) for a in initial_assignments]
+        current_eval = self.evaluator.evaluate_schedule(current_assignments, avail_map)
+
+        best_assignments = [dict(a) for a in current_assignments]
+        best_eval = dict(current_eval)
+
+        grid_positions = [(d, s) for d in days for s in slots]
+
+        # Mapeamentos rápidos em memória
+        class_slot_map = {(a['class_id'], a['day'], a['slot_id']): a for a in current_assignments}
+        teacher_occ = set((a['teacher_id'], a['day'], a['slot_id']) for a in current_assignments)
+
+        # Parâmetros calibrados do SA
+        t_initial = 100.0
+        t_final = 0.5
+        alpha = 0.92
+        steps_per_temp = min(30, max(10, len(classes) * 2))
+
+        temp = t_initial
+        while temp > t_final and (time.time() - sa_start) < max_time_seconds:
+            for _ in range(steps_per_temp):
+                c = random.choice(classes)
+                (d1, s1), (d2, s2) = random.sample(grid_positions, 2)
+
+                a1 = class_slot_map.get((c.id, d1, s1.id))
+                a2 = class_slot_map.get((c.id, d2, s2.id))
+
+                if a1 is None and a2 is None:
+                    continue
+
+                # Caso A: Swap entre duas aulas já alocadas da mesma turma
+                if a1 is not None and a2 is not None:
+                    t1, t2 = a1['teacher_id'], a2['teacher_id']
+                    if t1 == t2 and a1['subject_id'] == a2['subject_id']:
+                        continue
+
+                    # Viabilidade do professor 1 no slot 2
+                    t1_blocked = avail_map.get((t1, d2, s2.id)) == 'BLOCKED'
+                    t1_clash = (t1, d2, s2.id) in teacher_occ and t1 != t2
+                    if t1_blocked or t1_clash:
+                        continue
+
+                    # Viabilidade do professor 2 no slot 1
+                    t2_blocked = avail_map.get((t2, d1, s1.id)) == 'BLOCKED'
+                    t2_clash = (t2, d1, s1.id) in teacher_occ and t2 != t1
+                    if t2_blocked or t2_clash:
+                        continue
+
+                    # Executa movimento candidato
+                    a1['day'], a1['slot_id'], a1['slot_order'] = d2, s2.id, s2.order
+                    a2['day'], a2['slot_id'], a2['slot_order'] = d1, s1.id, s1.order
+
+                    candidate_eval = self.evaluator.evaluate_schedule(current_assignments, avail_map)
+
+                    # Guarda inviolável: Hard violations não podem aumentar
+                    if candidate_eval['hard_violations'] > current_eval['hard_violations']:
+                        a1['day'], a1['slot_id'], a1['slot_order'] = d1, s1.id, s1.order
+                        a2['day'], a2['slot_id'], a2['slot_order'] = d2, s2.id, s2.order
+                        continue
+
+                    delta_cost = candidate_eval['soft_penalty'] - current_eval['soft_penalty']
+
+                    # Critério de Aceitação de Metropolis
+                    accept = False
+                    if delta_cost <= 0:
+                        accept = True
+                    else:
+                        exponent = -delta_cost / temp
+                        prob = math.exp(exponent) if exponent > -700 else 0.0
+                        if random.random() < prob:
+                            accept = True
+
+                    if accept:
+                        del class_slot_map[(c.id, d1, s1.id)]
+                        del class_slot_map[(c.id, d2, s2.id)]
+                        class_slot_map[(c.id, d2, s2.id)] = a1
+                        class_slot_map[(c.id, d1, s1.id)] = a2
+
+                        teacher_occ.discard((t1, d1, s1.id))
+                        teacher_occ.discard((t2, d2, s2.id))
+                        teacher_occ.add((t1, d2, s2.id))
+                        teacher_occ.add((t2, d1, s1.id))
+
+                        current_eval = candidate_eval
+
+                        if (current_eval['hard_violations'] < best_eval['hard_violations'] or
+                            (current_eval['hard_violations'] == best_eval['hard_violations'] and
+                             current_eval['soft_penalty'] < best_eval['soft_penalty'])):
+                            best_assignments = [dict(a) for a in current_assignments]
+                            best_eval = dict(current_eval)
+                    else:
+                        a1['day'], a1['slot_id'], a1['slot_order'] = d1, s1.id, s1.order
+                        a2['day'], a2['slot_id'], a2['slot_order'] = d2, s2.id, s2.order
+
+                # Caso B: Movimentação de uma aula para um slot vazio da mesma turma
+                else:
+                    active_a = a1 if a1 is not None else a2
+                    from_d, from_s = (d1, s1) if a1 is not None else (d2, s2)
+                    to_d, to_s = (d2, s2) if a1 is not None else (d1, s1)
+
+                    t_id = active_a['teacher_id']
+                    if avail_map.get((t_id, to_d, to_s.id)) == 'BLOCKED' or (t_id, to_d, to_s.id) in teacher_occ:
+                        continue
+
+                    active_a['day'], active_a['slot_id'], active_a['slot_order'] = to_d, to_s.id, to_s.order
+                    candidate_eval = self.evaluator.evaluate_schedule(current_assignments, avail_map)
+
+                    if candidate_eval['hard_violations'] > current_eval['hard_violations']:
+                        active_a['day'], active_a['slot_id'], active_a['slot_order'] = from_d, from_s.id, from_s.order
+                        continue
+
+                    delta_cost = candidate_eval['soft_penalty'] - current_eval['soft_penalty']
+                    accept = False
+                    if delta_cost <= 0:
+                        accept = True
+                    else:
+                        exponent = -delta_cost / temp
+                        prob = math.exp(exponent) if exponent > -700 else 0.0
+                        if random.random() < prob:
+                            accept = True
+
+                    if accept:
+                        del class_slot_map[(c.id, from_d, from_s.id)]
+                        class_slot_map[(c.id, to_d, to_s.id)] = active_a
+
+                        teacher_occ.discard((t_id, from_d, from_s.id))
+                        teacher_occ.add((t_id, to_d, to_s.id))
+
+                        current_eval = candidate_eval
+
+                        if (current_eval['hard_violations'] < best_eval['hard_violations'] or
+                            (current_eval['hard_violations'] == best_eval['hard_violations'] and
+                             current_eval['soft_penalty'] < best_eval['soft_penalty'])):
+                            best_assignments = [dict(a) for a in current_assignments]
+                            best_eval = dict(current_eval)
+                    else:
+                        active_a['day'], active_a['slot_id'], active_a['slot_order'] = from_d, from_s.id, from_s.order
+
+            temp *= alpha
+
+        return best_assignments, best_eval

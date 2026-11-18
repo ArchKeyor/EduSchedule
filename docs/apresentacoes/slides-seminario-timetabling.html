@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Apresentação: Heurísticas para School Timetabling (UGB)</title>
+  
+  <!-- Reveal.js CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.0.4/reset.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.0.4/reveal.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.0.4/theme/dracula.min.css">
+
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --accent-blue: #38bdf8;
+      --accent-green: #34d399;
+      --accent-amber: #fbbf24;
+      --accent-red: #f87171;
+    }
+
+    body {
+      background: #0b1120;
+    }
+
+    .reveal {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #f8fafc;
+    }
+
+    .reveal h1, .reveal h2, .reveal h3 {
+      text-transform: none;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+
+    /* Tag de Cabeçalho */
+    .slide-tag {
+      font-size: 0.45em;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-blue);
+      margin-bottom: 0.3em;
+      display: inline-block;
+    }
+
+    .slide-title {
+      font-size: 1.35em !important;
+      margin-bottom: 0.6em !important;
+      line-height: 1.2 !important;
+    }
+
+    /* Grid de Cards */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      text-align: left;
+    }
+
+    .cards-grid.single {
+      grid-template-columns: 1fr;
+    }
+
+    .slide-card {
+      background: var(--card-bg);
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 24px 28px;
+      font-size: 0.58em;
+      line-height: 1.55;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+    }
+
+    .slide-card.blue { border-top: 5px solid var(--accent-blue); }
+    .slide-card.green { border-top: 5px solid var(--accent-green); }
+    .slide-card.amber { border-top: 5px solid var(--accent-amber); }
+    .slide-card.red { border-top: 5px solid var(--accent-red); }
+
+    .card-heading {
+      font-size: 1.2em;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .slide-card.blue .card-heading { color: var(--accent-blue); }
+    .slide-card.green .card-heading { color: var(--accent-green); }
+    .slide-card.amber .card-heading { color: var(--accent-amber); }
+    .slide-card.red .card-heading { color: var(--accent-red); }
+
+    .slide-card ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .slide-card li {
+      margin-bottom: 10px;
+      color: #cbd5e1;
+    }
+
+    .slide-card strong {
+      color: #ffffff;
+    }
+
+    .code-pill {
+      background: #090d16;
+      border: 1px solid #334155;
+      color: #38bdf8;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 1.05em;
+      display: block;
+      margin: 8px 0;
+      text-align: center;
+    }
+
+    /* Capa */
+    .capa-badge {
+      display: inline-block;
+      padding: 6px 18px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: var(--accent-blue);
+      border-radius: 9999px;
+      font-size: 0.45em;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .capa-title {
+      font-size: 1.55em !important;
+      margin-bottom: 15px !important;
+      line-height: 1.2 !important;
+    }
+
+    .capa-subtitle {
+      font-size: 0.65em;
+      color: #94a3b8;
+      margin-bottom: 40px !important;
+      line-height: 1.5;
+    }
+
+    .capa-meta {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      border-top: 1px solid #334155;
+      padding-top: 20px;
+      font-size: 0.48em;
+      color: #cbd5e1;
+    }
+
+    /* Tabela Comparativa */
+    .comp-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9em;
+      margin-bottom: 16px;
+    }
+
+    .comp-table th {
+      border-bottom: 2px solid #475569;
+      color: var(--accent-blue);
+      padding: 8px 12px;
+      text-align: left;
+    }
+
+    .comp-table td {
+      border-bottom: 1px solid #334155;
+      padding: 8px 12px;
+      color: #e2e8f0;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- SLIDE 1: CAPA -->
+      <section>
+        <div class="capa-badge">Centro Universitário Geraldo Di Biase (UGB) • Volta Redonda - RJ</div>
+        <h1 class="capa-title">Abordagem Heurística para o Problema de Alocação de Horários Escolares</h1>
+        <p class="capa-subtitle">Modelagem Matemática Formal, Espaço de Busca e Framework de Resolução em Dois Estágios (<em>School Timetabling Problem</em>)</p>
+        
+        <div class="capa-meta">
+          <div><strong>Disciplina:</strong> Laboratório de Programação (6º Período)</div>
+          <div><strong>Professor:</strong> Me. Marcelo Arantes de Oliveira</div>
+          <div><strong>Equipe:</strong> Kauê Loreno (Tech Lead) • Pedro Dornellas • Lucas Santana</div>
+        </div>
+
+        <aside class="notes">
+          Boa noite, professor Marcelo e colegas. Nós somos a equipe composta pelo Kauê, Pedro e Lucas. Hoje vamos apresentar a modelagem matemática e a abordagem heurística em dois estágios para solucionar o School Timetabling Problem.
+        </aside>
+      </section>
+
+      <!-- SLIDE 2: CONTEXTUALIZAÇÃO -->
+      <section>
+        <div class="slide-tag">1. Contextualização Teórica</div>
+        <h2 class="slide-title">O School Timetabling Problem e a Explosão Combinatória</h2>
+        <div class="cards-grid">
+          <div class="slide-card blue">
+            <div class="card-heading">🏫 O Problema Real de Timetabling</div>
+            <ul>
+              <li><strong>Desafio:</strong> Alocar semanalmente as aulas de turmas e professores em períodos letivos finitos.</li>
+              <li><strong>Gargalo Tradicional:</strong> Processo manual exaustivo que consome semanas dos coordenadores.</li>
+              <li><strong>Impacto Humano:</strong> Grades mal distribuídas geram janelas vagas (<em>gaps</em>). Tardif & Lessard (2014) comprovam que a fragmentação é causa primária de <strong>estresse crônico e burnout docente</strong>.</li>
+            </ul>
+          </div>
+
+          <div class="slide-card amber">
+            <div class="card-heading">⚠️ Por que Métodos Exatos Falham?</div>
+            <ul>
+              <li><strong>Classificação:</strong> Formalmente <strong>NP-Difícil (NP-Hard)</strong> (Even, Itai e Shamir, 1976).</li>
+              <li><strong>Redução Teórica:</strong> Coloração de Vértices de Grafos (Karp, 1972).</li>
+              <li><strong>Explosão Combinatória:</strong> Com 25 slots na semana e N aulas:<br>
+                <span class="code-pill">Espaço de Busca = 25^N</span>
+                Para 10 turmas (N = 250 aulas) &rarr; <strong>25^250 &approx; 10^350</strong> combinações!
+              </li>
+              <li><strong>Conclusão:</strong> Força bruta e MILP puro esgotam memória em <em>Branch-and-Bound</em>. Heurísticas são indispensáveis.</li>
+            </ul>
+          </div>
+        </div>
+
+        <aside class="notes">
+          Na gestão tradicional, montar grade é manual e gera janelas que desgastam o professor. Computacionalmente é NP-Hard (Even, Itai & Shamir). 10 turmas já geram 10^350 combinações, superando os átomos do universo. Métodos exatos sofrem esgotamento de memória, exigindo heurísticas.
+        </aside>
+      </section>
+
+      <!-- SLIDE 3: MODELAGEM MATEMÁTICA -->
+      <section>
+        <div class="slide-tag">2. Seção A: Modelagem Matemática</div>
+        <h2 class="slide-title">Definição Formal dos Conjuntos e Variáveis de Decisão</h2>
+        <div class="cards-grid">
+          <div class="slide-card blue">
+            <div class="card-heading">📦 Conjuntos e Parâmetros Discretos</div>
+            <ul>
+              <li><strong>Turmas (T):</strong> Classes de alunos ({t_1, t_2, ..., t_|T|}).</li>
+              <li><strong>Professores (P):</strong> Quadro docente cadastrado.</li>
+              <li><strong>Disciplinas (D):</strong> Matérias da matriz curricular.</li>
+              <li><strong>Slots Semanais (K):</strong> 5 dias &times; 5 períodos = <strong>25 slots</strong>.</li>
+              <li><strong>Carga Horária CH(t, d):</strong> Total semanal de aulas por matéria.</li>
+              <li><strong>Disponibilidade Disp(p, dia, s):</strong> 1 se livre; 0 se bloqueado.</li>
+            </ul>
+          </div>
+
+          <div class="slide-card green">
+            <div class="card-heading">🎯 Variável de Decisão Binária</div>
+            <p>A alocação de cada aula é regida pela variável de decisão:</p>
+            <div class="code-pill">x_{t, p, d, dia, s} ∈ {0, 1}</div>
+            <ul>
+              <li><strong>1:</strong> se a turma <em>t</em> assiste à aula da disciplina <em>d</em> com o docente <em>p</em> no dia e slot indicados.</li>
+              <li><strong>0:</strong> caso contrário.</li>
+              <li><strong>Otimização em RAM:</strong> Como cada matéria tem professor pré-atribuído Prof(t, d) = p, o tensor opera simplificado como <code>x_{t, d, dia, s}</code>, viabilizando operações em tempo <strong>O(1)</strong>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <aside class="notes">
+          Modelamos turmas, docentes, matérias e 25 slots na semana. A alocação é controlada pela variável binária x_{t,p,d,dia,s}. Como o professor é fixado pela matriz curricular, simplificamos o tensor em memória RAM para consulta ultra-rápida em O(1).
+        </aside>
+      </section>
+
+      <!-- SLIDE 4: RESTRIÇÕES FORTES -->
+      <section>
+        <div class="slide-tag">3. Seção B: Metodologia</div>
+        <h2 class="slide-title">Restrições Fortes (Hard Constraints) — Invioláveis</h2>
+        <div class="cards-grid single">
+          <div class="slide-card red">
+            <div class="card-heading">🚫 Condições Obrigatórias de Viabilidade Física e Matemática (Zero Conflitos)</div>
+            <p style="margin-bottom: 12px;">Se <strong>qualquer</strong> restrição dura for violada, a grade é considerada INVÁLIDA:</p>
+            <ul>
+              <li><strong>1. Unicidade Docente (Sem Choque de Professor):</strong> Um docente não pode lecionar em 2 turmas simultâneas:<br>
+                <span class="code-pill">&sum;_{t} &sum;_{d} x_{t, p, d, dia, s} &le; 1, &forall; p &isin; P, dia &isin; Dia, s &isin; S</span>
+              </li>
+              <li><strong>2. Unicidade de Turma (Sem Choque de Turma):</strong> Uma turma não pode ter duas aulas no mesmo horário:<br>
+                <span class="code-pill">&sum;_{p} &sum;_{d} x_{t, p, d, dia, s} &le; 1, &forall; t &isin; T, dia &isin; Dia, s &isin; S</span>
+              </li>
+              <li><strong>3. Respeito à Indisponibilidade Docente:</strong> Zero aulas em horários com bloqueio de agenda cadastrado.</li>
+              <li><strong>4. Cumprimento da Matriz Curricular:</strong> Todas as aulas previstas pela carga horária devem ser agendadas.</li>
+            </ul>
+          </div>
+        </div>
+
+        <aside class="notes">
+          As restrições fortes são inegociáveis. Se quebrar uma, a grade não funciona: unicidade docente (zero choque de professor), unicidade de turma (zero choque de turma), respeito estrito aos bloqueios de agenda e cumprimento integral de 100% da carga horária.
+        </aside>
+      </section>
+
+      <!-- SLIDE 5: RESTRIÇÕES FRACAS -->
+      <section>
+        <div class="slide-tag">3. Seção B: Metodologia</div>
+        <h2 class="slide-title">Restrições Fracas (Soft Constraints) — Qualidade Pedagógica</h2>
+        <div class="cards-grid single">
+          <div class="slide-card amber">
+            <div class="card-heading">✨ Critérios de Ergonomia Docente e Equilíbrio Didático</div>
+            <p style="margin-bottom: 12px;">As restrições fracas não inviabilizam a escola, mas medem a excelência da grade:</p>
+            <ul>
+              <li><strong>1. Minimização de Janelas Vagas Docentes (Teacher Gaps) — Peso w_gap = 85:</strong><br>
+                Penaliza intervalos ociosos intermediários na jornada diária do professor entre a primeira e a última aula. Conforme Tardif & Lessard, eliminar janelas protege a saúde mental do docente.
+              </li>
+              <li><strong>2. Equilíbrio Diário de Disciplinas (Daily Balance) — Peso w_balance = 70:</strong><br>
+                Evita mais de 2 aulas da mesma matéria no mesmo dia para uma turma, prevenindo a exaustão cognitiva dos estudantes.
+              </li>
+              <li><strong>3. Atendimento às Preferências Docentes:</strong><br>
+                Prioriza turnos e dias declarados como preferidos em caso de empate entre slots viáveis.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <aside class="notes">
+          As restrições suaves medem o conforto humano: eliminar janelas ociosas dos professores (peso 85) para evitar estresse, balancear matérias para no máximo 2 aulas no mesmo dia (peso 70) para não cansar o aluno, e atender preferências de turnos.
+        </aside>
+      </section>
+
+      <!-- SLIDE 6: FITNESS FUNCTION -->
+      <section>
+        <div class="slide-tag">3. Seção B: Metodologia</div>
+        <h2 class="slide-title">Função de Aptidão e Penalização Ponderada (Fitness Function)</h2>
+        <div class="cards-grid single">
+          <div class="slide-card blue">
+            <div class="card-heading">📐 Formulação Escalar da Função Objetivo de Custo a ser Minimizada</div>
+            <div class="code-pill" style="font-size: 1.15em; padding: 12px;">f(S) = W_hard &middot; &sum; H_i(S) + &sum; w_j &middot; V_j(S)</div>
+            <ul>
+              <li><strong>H_i(S):</strong> Contador de violações de restrições rígidas (choque docente, turma ou bloqueio).</li>
+              <li><strong>W_hard = 100.000:</strong> Penalidade dissuasiva extrema. Torna a solução instantaneamente inviável.</li>
+              <li><strong>V_j(S):</strong> Frequência de penalidades suaves (janelas ociosas, excesso diário de aulas).</li>
+              <li><strong>Pesos Calibrados no Motor:</strong> <code>w_gap = 85</code> | <code>w_balance = 70</code>.</li>
+              <li><strong>Critério Formal de Viabilidade:</strong><br>
+                Grade Viável (Feasible) &hArr; &sum; H_i(S) = 0 &hArr; <strong>f(S) &lt; 100.000</strong>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <aside class="notes">
+          A Fitness Function é uma função de custo a minimizar. O segredo é o peso dissuasivo W_hard de 100.000: qualquer choque explode o custo e invalida a grade. A grade só é viável se f(S) for menor que 100.000, momento em que as soft constraints assumem o polimento.
+        </aside>
+      </section>
+
+      <!-- SLIDE 7: HEURÍSTICA 1 - DSATUR COM DIAGRAMA -->
+      <section>
+        <div class="slide-tag">4. Seção C: Heurísticas Adotadas</div>
+        <h2 class="slide-title" style="margin-bottom: 15px !important;">Algoritmo 1: Heurística Construtiva Inspirada em Saturação (DSatur)</h2>
+        <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 12px;">
+          <img src="diagrama-dsatur-fluxo.svg" alt="Diagrama DSatur" style="max-width: 92%; max-height: 430px; border-radius: 8px; border: 1px solid #334155; box-shadow: 0 8px 30px rgba(0,0,0,0.6);" />
+        </div>
+        <aside class="notes">
+          Olhem para este diagrama: o segredo do algoritmo é o princípio Fail-First. No Passo 1 temos as matérias misturadas. No Passo 2, calculamos a criticidade: o Prof. João tem poucos horários livres, então ele vai para o topo da fila no Passo 3. No Passo 4, alocamos primeiro o João onde ele pode dar aula. Resultado: preenchemos a matriz em memória RAM em menos de 100ms e entregamos zero choques para a próxima etapa.
+        </aside>
+      </section>
+
+      <!-- SLIDE 8: HEURÍSTICA 2 - SIMULATED ANNEALING COM DIAGRAMA -->
+      <section>
+        <div class="slide-tag">4. Seção C: Heurísticas Adotadas</div>
+        <h2 class="slide-title" style="margin-bottom: 15px !important;">Algoritmo 2: Simulated Annealing — Como Escapar de Ótimos Locais</h2>
+        <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 12px;">
+          <img src="diagrama-simulated-annealing-landscape.svg" alt="Diagrama Simulated Annealing" style="max-width: 92%; max-height: 430px; border-radius: 8px; border: 1px solid #334155; box-shadow: 0 8px 30px rgba(0,0,0,0.6);" />
+        </div>
+        <aside class="notes">
+          Este gráfico mostra por que o Simulated Annealing é superior ao Hill Climbing. O Hill Climbing é míope: ele desce até o Ótimo Local da esquerda e empaca ali com 2 janelas vagas, porque qualquer troca direta pioraria a grade. O Simulated Annealing, com temperatura alta, tem energia para aceitar pioras temporárias via Critério de Metropolis, saltando a barreira e caindo no Ótimo Global, onde as janelas são eliminadas.
+        </aside>
+      </section>
+
+      <!-- SLIDE 8B: OPERADOR SWAP MOVE COM DIAGRAMA -->
+      <section>
+        <div class="slide-tag">4. Seção C: Heurísticas Adotadas</div>
+        <h2 class="slide-title" style="margin-bottom: 15px !important;">Operador de Perturbação: Swap Move Intra-Turma na Prática</h2>
+        <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 12px;">
+          <img src="diagrama-swap-move.svg" alt="Diagrama Swap Move" style="max-width: 92%; max-height: 430px; border-radius: 8px; border: 1px solid #334155; box-shadow: 0 8px 30px rgba(0,0,0,0.6);" />
+        </div>
+        <aside class="notes">
+          Aqui está o mecanismo prático de perturbação. À esquerda, vejam a terça-feira da turma: o Prof. João tem Física no Slot 1 e Slot 3, deixando o Slot 2 vago — uma janela de 1 hora no meio da jornada que desgasta o professor. O operador Swap Move permuta as aulas, compactando a Física em aulas geminadas. A janela é eliminada, o custo cai 85 pontos e validamos se o professor está livre antes de aceitar.
+        </aside>
+      </section>
+
+      <!-- SLIDE 9: SÍNTESE COMPARATIVA E CONCLUSÃO -->
+      <section>
+        <div class="slide-tag">5. Conclusão</div>
+        <h2 class="slide-title">Síntese Comparativa e o Framework em Dois Estágios</h2>
+        <div class="cards-grid single">
+          <div class="slide-card green">
+            <div class="card-heading">🏆 Quadro Comparativo das Abordagens e Encerramento</div>
+            <table class="comp-table">
+              <thead>
+                <tr>
+                  <th>Critério</th>
+                  <th>Fase 1: DSatur Guloso</th>
+                  <th>Fase 2: Simulated Annealing</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Família</strong></td>
+                  <td>Heurística Construtiva Determinística</td>
+                  <td>Metaheurística Estocástica de Trajetória</td>
+                </tr>
+                <tr>
+                  <td><strong>Objetivo</strong></td>
+                  <td>Viabilidade Física Estrita (Hard = 0)</td>
+                  <td>Minimização de Janelas Docentes (Soft)</td>
+                </tr>
+                <tr>
+                  <td><strong>Ponto de Partida</strong></td>
+                  <td>Grade Vazia (&empty;)</td>
+                  <td>Grade Viável da Fase 1 (Warm Start)</td>
+                </tr>
+                <tr>
+                  <td><strong>Complexidade</strong></td>
+                  <td>O(N log N) (&lt; 100 milissegundos)</td>
+                  <td>O(Iterações &times; Custo(&Delta;f))</td>
+                </tr>
+                <tr>
+                  <td><strong>Ótimo Local</strong></td>
+                  <td>Não possui escape</td>
+                  <td>Escape via Critério de Metropolis (e^{-&Delta;f/T})</td>
+                </tr>
+              </tbody>
+            </table>
+            <p style="font-size: 1.05em; color: #f1f5f9; line-height: 1.5; margin-top: 10px;">
+              <strong>Conclusão:</strong> A hibridização em dois estágios resolve com perfeição o <em>School Timetabling Problem</em>: a Heurística Construtiva supera a intratabilidade combinatória garantindo zero conflitos em milissegundos, enquanto o <em>Simulated Annealing</em> refina o conforto ergonômico e humano da jornada docente.
+            </p>
+          </div>
+        </div>
+
+        <aside class="notes">
+          Para sintetizar: DSatur constrói em O(N log N) focando em Hard=0. O Simulated Annealing parte da grade viável e elimina janelas usando perturbações de vizinhança. Esse framework em dois estágios entrega grades perfeitas em frações de segundo. Obrigado!
+        </aside>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Reveal.js Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.0.4/reveal.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.0.4/plugin/notes/notes.min.js"></script>
+  <script>
+    Reveal.initialize({
+      hash: true,
+      slideNumber: 'c/t',
+      controls: true,
+      progress: true,
+      center: true,
+      transition: 'slide',
+      plugins: [ RevealNotes ]
+    });
+  </script>
+</body>
+</html>

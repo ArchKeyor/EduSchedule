@@ -1,0 +1,21 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Kauê Loreno//Agenda Claude Pitch//PT-BR
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:20261104T194000Z-pitch-claude@timetabling
+DTSTAMP:20261104T175900Z
+DTSTART:20261104T194000
+DTEND:20261104T204000
+SUMMARY:📅 AGENDA: Voltar ao Claude — Terminar Slides do Pitch e Roteiro
+DESCRIPTION:Lembrete de Agenda: Voltar ao Claude para terminar a confecção dos slides do pitch para sexta-feira e elaborar o roteiro completo de apresentação.
+LOCATION:Claude / Workspace
+STATUS:CONFIRMED
+BEGIN:VALARM
+TRIGGER:-PT0M
+ACTION:DISPLAY
+DESCRIPTION:Lembrete: Terminar slides do pitch e roteiro no Claude às 19h40
+END:VALARM
+END:VEVENT
+END:VCALENDAR

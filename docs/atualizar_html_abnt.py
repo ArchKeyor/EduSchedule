@@ -1,0 +1,634 @@
+import re
+
+html_content = '''<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório Técnico - School Timetabling Problem (ABNT)</title>
+  
+  <!-- MathJax para equações nítidas -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\\\(', '\\\\)']],
+        displayMath: [['$$', '$$'], ['\\\\[', '\\\\]']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
+
+  <style>
+    /* ========================================================
+       NORMAS ABNT NBR 14724 COM FOLHAS FÍSICAS INDIVIDUAIS A4
+       ======================================================== */
+    * {
+      box-sizing: border-box;
+    }
+
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    body {
+      background-color: #525659;
+      margin: 0;
+      padding: 30px 0;
+      font-family: 'Arial', 'Helvetica Neue', sans-serif;
+      font-size: 11pt;
+      line-height: 1.45;
+      color: #111;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .a4-page {
+      width: 210mm;
+      height: 297mm;
+      padding: 30mm 20mm 20mm 30mm;
+      margin: 25px auto;
+      background: #ffffff;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page-number {
+      position: absolute;
+      top: 20mm;
+      right: 20mm;
+      font-size: 10pt;
+      color: #333;
+    }
+
+    p {
+      text-align: justify;
+      text-indent: 1.25cm;
+      margin-top: 0;
+      margin-bottom: 0.45em;
+    }
+
+    h1, h2, h3 {
+      color: #000;
+      font-weight: bold;
+      margin-top: 1.1em;
+      margin-bottom: 0.5em;
+      line-height: 1.2;
+    }
+
+    h1 {
+      font-size: 12pt;
+      text-transform: uppercase;
+      border-bottom: 1px solid #111;
+      padding-bottom: 3px;
+    }
+
+    h2 {
+      font-size: 11pt;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    h3 {
+      font-size: 10.5pt;
+      font-weight: bold;
+    }
+
+    ul, ol {
+      margin-top: 0.25em;
+      margin-bottom: 0.45em;
+      padding-left: 1.6cm;
+    }
+
+    li {
+      margin-bottom: 0.25em;
+      text-align: justify;
+    }
+
+    .capa {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: center;
+    }
+
+    .capa-instituicao {
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 11.5pt;
+      line-height: 1.35;
+    }
+
+    .capa-autores {
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 11.5pt;
+      margin-top: 2.8cm;
+    }
+
+    .capa-titulo-bloco {
+      margin-top: 3.2cm;
+    }
+
+    .capa-titulo {
+      font-size: 14pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      line-height: 1.3;
+    }
+
+    .capa-subtitulo {
+      font-size: 11.5pt;
+      font-weight: normal;
+      margin-top: 10px;
+    }
+
+    .natureza-trabalho {
+      margin-top: 1.8cm;
+      margin-left: 7.5cm;
+      font-size: 9.5pt;
+      line-height: 1.3;
+      text-align: justify;
+    }
+
+    .capa-rodape {
+      font-size: 10.5pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-top: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.6em 0;
+      font-size: 9pt;
+    }
+
+    table th, table td {
+      padding: 5px 8px;
+      text-align: left;
+    }
+
+    table th {
+      border-top: 2px solid #000;
+      border-bottom: 1px solid #000;
+      background-color: #f8fafc;
+      font-weight: bold;
+    }
+
+    table td {
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    table tr:last-child td {
+      border-bottom: 2px solid #000;
+    }
+
+    .caption-tabela {
+      font-size: 9pt;
+      font-weight: bold;
+      margin-bottom: 3px;
+    }
+
+    .fonte-tabela {
+      font-size: 8.5pt;
+      color: #555;
+      margin-top: 3px;
+    }
+
+    .box-teorico {
+      border-left: 4px solid #2563eb;
+      background-color: #f1f5f9;
+      padding: 7px 11px;
+      margin: 0.5em 0;
+      font-size: 9.5pt;
+    }
+
+    .top-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: #1e293b;
+      color: #fff;
+      padding: 10px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    }
+
+    .btn-action {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+
+    .btn-action:hover {
+      background: #1d4ed8;
+    }
+
+    @media print {
+      body {
+        background-color: transparent;
+        padding: 0;
+        margin: 0;
+      }
+      .top-toolbar {
+        display: none !important;
+      }
+      .a4-page {
+        width: 210mm;
+        height: 297mm;
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA DE FERRAMENTAS FIXA -->
+  <div class="top-toolbar">
+    <div>
+      <span style="font-weight: bold; font-size: 14px;">📄 Relatório Técnico ABNT NBR 14724</span>
+      <span style="font-size: 12px; color: #94a3b8; margin-left: 10px;">Versão Revisada e Atualizada (Fase 2)</span>
+    </div>
+    <button class="btn-action" onclick="window.print()">
+      🖨️ Salvar como PDF / Imprimir (Ctrl + P)
+    </button>
+  </div>
+
+  <!-- PÁGINA 1: CAPA -->
+  <div class="a4-page">
+    <div class="capa">
+      <div class="capa-instituicao">
+        CENTRO UNIVERSITÁRIO GERALDO DI BIASE – UGB<br>
+        CURSO DE ENGENHARIA DE SOFTWARE<br>
+        DISCIPLINA: LABORATÓRIO DE PROGRAMAÇÃO (6º PERÍODO)
+      </div>
+
+      <div class="capa-autores">
+        KAUÊ LORENO LOPES<br>
+        PEDRO HENRIQUE DIAS DORNELLAS<br>
+        LUCAS SANTANA
+      </div>
+
+      <div class="capa-titulo-bloco">
+        <div class="capa-titulo">
+          ABORDAGEM HEURÍSTICA PARA O PROBLEMA DE ALOCAÇÃO DE HORÁRIOS ESCOLARES
+        </div>
+        <div class="capa-subtitulo">
+          Modelagem Matemática Formal, Espaço de Busca e Framework de Resolução em Dois Estágios (<em>School Timetabling Problem</em>)
+        </div>
+      </div>
+
+      <div class="natureza-trabalho">
+        Relatório Técnico-Científico apresentado à disciplina de Laboratório de Programação do Curso de Engenharia de Software como requisito de avaliação acadêmica.<br><br>
+        <strong>Professor Orientador:</strong> Prof. Me. Marcelo Arantes de Oliveira
+      </div>
+
+      <div class="capa-rodape">
+        VOLTA REDONDA – RJ<br>
+        2026
+      </div>
+    </div>
+  </div>
+
+  <!-- PÁGINA 2: SUMÁRIO -->
+  <div class="a4-page">
+    <h1>SUMÁRIO</h1>
+    <ul style="list-style: none; padding-left: 0; margin-top: 1.2cm; font-size: 10.5pt; line-height: 1.8;">
+      <li style="display: flex; justify-content: space-between; border-bottom: 1px dotted #888;">
+        <strong>1 INTRODUÇÃO E CONTEXTUALIZAÇÃO DO PROBLEMA</strong> <span>03</span>
+      </li>
+      <li style="display: flex; justify-content: space-between; border-bottom: 1px dotted #888;">
+        <strong>2 SEÇÃO A: MODELAGEM MATEMÁTICA FORMAL</strong> <span>04</span>
+      </li>
+      <li style="padding-left: 20px; display: flex; justify-content: space-between;">
+        2.1 Definição dos Conjuntos e Parâmetros <span>04</span>
+      </li>
+      <li style="padding-left: 20px; display: flex; justify-content: space-between;">
+        2.2 Variáveis de Decisão <span>04</span>
+      </li>
+      <li style="padding-left: 20px; display: flex; justify-content: space-between;">
+        2.3 Espaço de Busca Combinatório e Teoria da Complexidade <span>05</span>
+      </li>
+      <li style="display: flex; justify-content: space-between; border-bottom: 1px dotted #888;">
+        <strong>3 SEÇÃO B: METODOLOGIA (RESTRIÇÕES E FUNÇÃO DE AVALIAÇÃO)</strong> <span>06</span>
+      </li>
+      <li style="padding-left: 20px; display: flex; justify-content: space-between;">
+        3.1 Restrições Fortes (<em>Hard Constraints</em>) <span>06</span>
+      </li>
+      <li style="padding-left: 20px; display: flex; justify-content: space-between;">
+        3.2 Restrições Fracas (<em>Soft Constraints</em>) <span>06</span>
+      </li>
+      <li style="padding-left: 20px; display: flex; justify-content: space-between;">
+        3.3 Função de Aptidão / Custo (<em>Fitness Function</em>) <span>07</span>
+      </li>
+      <li style="display: flex; justify-content: space-between; border-bottom: 1px dotted #888;">
+        <strong>4 SEÇÃO C: HEURÍSTICAS E METAHEURÍSTICAS ADOTADAS</strong> <span>07</span>
+      </li>
+      <li style="padding-left: 20px; display: flex; justify-content: space-between;">
+        4.1 Fase 1: Heurística Construtiva Inspirada em Saturação <span>07</span>
+      </li>
+      <li style="padding-left: 20px; display: flex; justify-content: space-between;">
+        4.2 Fase 2: Metaheurística de Busca Local (<em>Simulated Annealing</em>) <span>08</span>
+      </li>
+      <li style="padding-left: 20px; display: flex; justify-content: space-between;">
+        4.3 Síntese Comparativa das Abordagens <span>08</span>
+      </li>
+      <li style="padding-left: 20px; display: flex; justify-content: space-between;">
+        4.4 Análise Teórica: Limites de Custo, Metropolis e Viabilidade <span>09</span>
+      </li>
+      <li style="display: flex; justify-content: space-between; border-bottom: 1px dotted #888;">
+        <strong>5 CONSIDERAÇÕES FINAIS</strong> <span>10</span>
+      </li>
+      <li style="display: flex; justify-content: space-between; border-bottom: 1px dotted #888;">
+        <strong>REFERÊNCIAS</strong> <span>10</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- PÁGINA 3: INTRODUÇÃO -->
+  <div class="a4-page">
+    <div class="page-number">3</div>
+    <h1>1 INTRODUÇÃO E CONTEXTUALIZAÇÃO DO PROBLEMA</h1>
+
+    <p>O Problema de Alocação de Horários Escolares (formalmente designado na literatura científica por <em>School Timetabling Problem</em> - STP) compreende a tarefa operacional e pedagógica de distribuir um conjunto de aulas curriculares ministradas por docentes específicos a turmas fixas, ao longo de uma grade semanal finita e estruturada de horários (<em>time slots</em>), sujeita a severas restrições humanas e físicas.</p>
+
+    <p>Trata-se de um problema canônico de otimização combinatória classificado como NP-difícil (a versão de decisão é NP-completa) (EVEN; ITAI; SHAMIR, 1976). Na prática administrativa da expressiva maioria das instituições de ensino básico, técnico e superior, a elaboração da grade é historicamente conduzida de forma manual por coordenadores de curso. Esse processo puramente artesanal consome tempo considerável da gestão e resulta sistematicamente em falhas operacionais, tais como choques acidentais de turmas ou professores e grades com janelas vagas ociosas (<em>gaps</em>) entre períodos.</p>
+
+    <p>Conforme discutem Tardif e Lessard (2014), a fragmentação da jornada diária e a presença recorrente de janelas desnecessárias na grade docente constituem fatores de estresse, absenteísmo e precarização do trabalho dos professores, afetando sensivelmente a qualidade do ambiente escolar.</p>
+
+    <p>Sob a perspectiva da Teoria da Computação, tentativas de solucionar instâncias reais de agendamento por meio de métodos determinísticos de força bruta ou formulações puras de Programação Linear Inteira Mista (MILP) esbarram na barreira da explosão combinatória: o número de variáveis binárias cresce exponencialmente, podendo levar ao esgotamento de memória em árvores de <em>Branch-and-Bound</em> e dificultar a obtenção de soluções em tempo hábil para instâncias reais de médio e grande porte.</p>
+
+    <p>Por esse motivo, o estado da arte internacional consagrou o uso de Heurísticas Construtivas e Metaheurísticas de Busca Local organizadas sob o paradigma híbrido em dois estágios (BURKE et al., 1998; LEWIS, 2008). O presente relatório formaliza a modelagem matemática e os algoritmos desenvolvidos para o motor do sistema <em>TimeTabling</em>, projetado para buscar grades sem violações rígidas e proporcionar conforto ergonômico aos professores.</p>
+  </div>
+
+  <!-- PÁGINA 4: MODELAGEM MATEMÁTICA -->
+  <div class="a4-page">
+    <div class="page-number">4</div>
+    <h1>2 SEÇÃO A: MODELAGEM MATEMÁTICA FORMAL</h1>
+
+    <p>A modelagem matemática visa converter as regras pedagógicas e contratuais da instituição em entidades discretas, conjuntos formais e variáveis de decisão.</p>
+
+    <h2>2.1 DEFINIÇÃO DOS CONJUNTOS E PARÂMETROS</h2>
+    <p>O universo do problema é estruturado a partir dos seguintes conjuntos discretos:</p>
+    <ul>
+      <li><strong>Conjunto de Turmas ($T$):</strong> $T = \\{t_1, t_2, \\dots, t_{|T|}\\}$, representando as classes curriculares de alunos.</li>
+      <li><strong>Conjunto de Professores ($P$):</strong> $P = \\{p_1, p_2, \\dots, p_{|P|}\\}$, representando o corpo docente cadastrado.</li>
+      <li><strong>Conjunto de Disciplinas ($D$):</strong> $D = \\{d_1, d_2, \\dots, d_{|D|}\\}$, representando as matérias da matriz curricular.</li>
+      <li><strong>Conjunto de Dias da Semana ($Dia$):</strong> $Dia = \\{1, 2, 3, 4, 5\\}$, correspondendo à jornada de segunda a sexta-feira ($|Dia| = 5$).</li>
+      <li><strong>Conjunto de Períodos Diários ($S$):</strong> $S = \\{1, 2, \\dots, |S|\\}$, onde cada período representa uma aula unitária (fixado em $|S| = 5$ períodos diários).</li>
+      <li><strong>Conjunto Global de Slots Semanais ($K$):</strong> $K = Dia \\times S$, perfazendo $|K| = |Dia| \\cdot |S| = 25$ posições temporais na semana.</li>
+      <li><strong>Carga Horária Semanal ($CH$):</strong> $CH(t, d) \\in \\mathbb{N}$, determinando a quantidade de períodos que a turma $t$ deve cursar da matéria $d$.</li>
+      <li><strong>Atribuição Docente ($Prof$):</strong> Função $Prof(t, d) = p$ que associa cada disciplina da turma ao seu professor responsável.</li>
+      <li><strong>Disponibilidade Docente ($Disp$):</strong> Tensor binário indicando disponibilidade temporal, onde $Disp_{p, dia, s} = 1$ se o docente $p$ está liberado no dia $dia$ e período $s$; $0$ se há restrição contratual ou bloqueio.</li>
+      <li><strong>Preferência Docente ($Pref$):</strong> $Pref(p) \\subseteq Dia$, o subconjunto de dias livres que o professor prefere lecionar. Dias bloqueados correspondem a $Disp = 0$.</li>
+    </ul>
+
+    <h2>2.2 VARIÁVEIS DE DECISÃO</h2>
+    <p>A atribuição de uma aula na grade horária é formalmente controlada por uma variável de decisão binária multidimensional:</p>
+
+    $$x_{t, p, d, dia, s} \\in \\{0, 1\\}$$
+
+    <p>onde $x_{t, p, d, dia, s} = 1$ se a aula da matéria $d$, lecionada pelo professor $p$ para a turma $t$, for posicionada no dia $dia$ durante o período $s$; caso contrário, $x_{t, p, d, dia, s} = 0$. Como a disciplina de uma turma possui um único docente pré-designado ($Prof(t,d) = p$), a representação simplifica-se sem perda de generalidade para $x_{t, d, dia, s} \\in \\{0, 1\\}$. Para diferenciar a solução de grade do conjunto $S$ de períodos diários, adota-se a notação $\\mathcal{G}$ para representar uma grade horária candidata.</p>
+  </div>
+
+  <!-- PÁGINA 5: ESPAÇO DE BUSCA E HARD CONSTRAINTS -->
+  <div class="a4-page">
+    <div class="page-number">5</div>
+    <h2>2.3 ESPAÇO DE BUSCA COMBINATÓRIO E TEORIA DA COMPLEXIDADE</h2>
+    <p>O espaço de busca combinatório $\\Omega$ reúne todas as permutações possíveis de alocação de aulas nos horários da semana:</p>
+    <ul>
+      <li>Seja $N$ o total de aulas letivas demandadas pela totalidade das turmas: $N = \\sum_{t \\in T} \\sum_{d \\in D} CH(t, d)$.</li>
+      <li>Para cada uma das $N$ aulas, existem $|K| = |Dia| \\times |S| = 25$ slots temporais elegíveis.</li>
+      <li>Dessa forma, a cardinalidade do espaço de soluções bruto (como um limite superior irrestrito) é expressa por: $|\\Omega| = (|Dia| \\times |S|)^N = 25^N$.</li>
+    </ul>
+
+    <div class="box-teorico">
+      <strong>Magnitude Combinatória (Limite Superior Bruto):</strong><br>
+      Para uma instituição modesta com apenas 10 turmas e 25 aulas semanais por turma ($N = 250$ aulas), o espaço bruto atinge $|\\Omega| = 25^{250} \\approx 3,05 \\times 10^{349}$ (ordem de $10^{350}$), muito acima da estimativa de $10^{80}$ átomos do universo observável, o que inviabiliza a busca exaustiva.
+    </div>
+
+    <p>A intratabilidade é estabelecida por Even, Itai e Shamir (1976), que demonstraram que a versão de decisão do problema de horários é NP-completa; logo, a otimização correspondente é NP-difícil. Há semelhança estrutural com a coloração de vértices (KARP, 1972), em que aulas são vértices, conflitos são arestas e horários são cores, mas este trabalho não apresenta uma redução formal.</p>
+
+    <h1>3 SEÇÃO B: METODOLOGIA (RESTRIÇÕES E FUNÇÃO DE AVALIAÇÃO)</h1>
+
+    <h2>3.1 RESTRIÇÕES FORTES (<em>HARD CONSTRAINTS</em>)</h2>
+    <p>As restrições fortes são condições inegociáveis. Se houver ao menos uma violação, a grade é considerada inválida e inutilizável:</p>
+
+    <p><strong>1. Unicidade Docente:</strong> Um professor não pode estar em duas turmas ao mesmo tempo:</p>
+    $$\\sum_{t \\in T} \\sum_{d \\in D} x_{t, p, d, dia, s} \\le 1, \\quad \\forall p \\in P, \\, \\forall dia \\in Dia, \\, \\forall s \\in S$$
+
+    <p><strong>2. Unicidade de Turma:</strong> Uma turma não pode ter aulas simultâneas:</p>
+    $$\\sum_{p \\in P} \\sum_{d \\in D} x_{t, p, d, dia, s} \\le 1, \\quad \\forall t \\in T, \\, \\forall dia \\in Dia, \\, \\forall s \\in S$$
+
+    <p><strong>3. Respeito aos Bloqueios de Agenda:</strong> Bloqueios cadastrados não podem receber aulas:</p>
+    $$x_{t, p, d, dia, s} \\le Disp_{p, dia, s}, \\quad \\forall t, p, d, dia, s$$
+  </div>
+
+  <!-- PÁGINA 6: SOFT CONSTRAINTS E FITNESS FUNCTION -->
+  <div class="a4-page">
+    <div class="page-number">6</div>
+    <p><strong>4. Integralidade da Carga Horária Curricular:</strong> Todas as aulas devem ser agendadas:</p>
+    $$\\sum_{dia \\in Dia} \\sum_{s \\in S} x_{t, Prof(t,d), d, dia, s} = CH(t, d), \\quad \\forall t \\in T, \\, \\forall d \\in D$$
+
+    <h2>3.2 RESTRIÇÕES FRACAS (<em>SOFT CONSTRAINTS</em>)</h2>
+    <p>As restrições flexíveis não inviabilizam a grade, mas mensuram sua qualidade pedagógica:</p>
+
+    <p><strong>1. Minimização de Janelas Vagas Docentes (<em>Teacher Gaps</em>):</strong> Penaliza intervalos ociosos na jornada diária do professor. Sendo $s_{min}$ e $s_{max}$ o primeiro e o último horário de aula do docente no dia: $Gap(p, dia) = (s_{max} - s_{min} + 1) - \\text{TotalAulas}(p, dia)$. Em dias sem aulas, adota-se estritamente $Gap(p, dia) = 0$.</p>
+
+    <p><strong>2. Equilíbrio Diário de Disciplinas:</strong> Evita que os estudantes tenham mais de 2 aulas da mesma disciplina no mesmo dia, prevenindo a estafa cognitiva: $Excesso(t, d, dia) = \\max\\left(0, \\sum_{s \\in S} x_{t, Prof(t,d), d, dia, s} - 2\\right)$.</p>
+
+    <p><strong>3. Preferências Docentes:</strong> Penaliza aulas alocadas em dia livre que não seja preferido pelo professor: $Pen\\_pref = \\sum x_{t, Prof(t,d), d, dia, s}$ sobre os dias em $Livre(p) \\setminus Pref(p)$. Cada aula contribui com no máximo 1 ponto.</p>
+
+    <h2>3.3 FUNÇÃO DE APTIDÃO / CUSTO (<em>FITNESS FUNCTION</em>)</h2>
+    <p>A qualidade de uma grade $\\mathcal{G} \\in \\Omega$ é mensurada por uma função escalar de custo a ser minimizada:</p>
+
+    $$f(\\mathcal{G}) = W_{hard} \\cdot \\sum_{i \\in \\text{Hard}} H_i(\\mathcal{G}) + \\sum_{j \\in \\text{Soft}} w_j \\cdot V_j(\\mathcal{G})$$
+
+    <p>onde $H_i(\\mathcal{G})$ contabiliza choques rígidos e $V_j(\\mathcal{G})$ as penalidades suaves: $W_{hard} = 100.000$; $w_{gap} = 85$; $w_{balance} = 70$; $w_{pref} = 50$ (valor proposto, a calibrar).</p>
+
+    <p><strong>Condição Formal de Viabilidade:</strong> Viável $\\iff \\sum H_i = 0$. Se o custo soft máximo de toda grade viável for menor que $W_{hard}$, vale também $f(\\mathcal{G}) < W_{hard} \\iff$ viável.</p>
+
+    <p><strong>Proposição:</strong> Para toda grade viável, custo soft $\\le 1.275 \\cdot |P| + 1.050 \\cdot |T| + w_{pref} \\cdot N$ (demonstração na Seção 4.4).</p>
+  </div>
+
+  <!-- PÁGINA 7: HEURÍSTICA CONSTRUTIVA -->
+  <div class="a4-page">
+    <div class="page-number">7</div>
+    <h1>4 SEÇÃO C: HEURÍSTICAS E METAHEURÍSTICAS ADOTADAS</h1>
+
+    <p>O sistema adota o paradigma consolidado de Resolução em Dois Estágios (BURKE et al., 1998; LEWIS, 2008): a Fase 1 busca viabilidade física estrita ($Hard = 0$), e a Fase 2 atua no refinamento ergonômico ($Soft$).</p>
+
+    <h2>4.1 FASE 1: HEURÍSTICA CONSTRUTIVA INSPIRADA EM SATURAÇÃO</h2>
+    <p><strong>Funcionamento Teórico:</strong> Inspirado no algoritmo de saturação de grafos (BRÉLAZ, 1979) e em estratégias heurísticas para agendamento educacional (CARTER; LAPORTE; LEE, 1996), este método aplica uma abordagem construtiva baseada na filosofia "Fail-First". A ordenação é estática; não há recálculo dinâmico da saturação, portanto não é o DSatur clássico.</p>
+
+    <p><strong>Mecanismo de Busca:</strong></p>
+    <ol>
+      <li>As aulas são ordenadas previamente de forma decrescente pela função de criticidade:
+        $$Criticidade(d) = \\alpha \\cdot CH(t, d) + \\beta \\cdot (1 - Disp)$$
+        onde $CH(t, d)$ é a carga semanal; $Disp$ é a fração de slots livres do professor na semana; e $\\alpha$ e $\\beta$ são pesos de ajuste.
+      </li>
+      <li>O motor percorre a lista e consulta a matriz em memória RAM (<code>GridState</code>).</li>
+      <li>Aloca a aula no primeiro slot compatível $(dia, s)$ livre para a turma e professor sem violar bloqueios.</li>
+      <li>Custo computacional: ordenação $O(N \\log N)$ + busca $O(N \\cdot |K|)$; como $|K| = 25$ é constante, $O(N \\log N)$. Para $N = 250$, representa da ordem de $10^4$ operações elementares (análise teórica, sem benchmark formal).</li>
+    </ol>
+
+    <p><strong>Limitação Teórica:</strong> Sem reparo nem <em>backtracking</em>, o método não garante viabilidade em toda instância. Duas condições necessárias, verificáveis em $O(N)$, são: a carga horária de cada turma deve ser $\\le 25$ e a carga de cada professor $\\le$ seu número total de slots livres.</p>
+  </div>
+
+  <!-- PÁGINA 8: SIMULATED ANNEALING E TABELA -->
+  <div class="a4-page">
+    <div class="page-number">8</div>
+    <h2>4.2 FASE 2: METAHEURÍSTICA DE BUSCA LOCAL (<em>SIMULATED ANNEALING</em>)</h2>
+    <p><strong>Funcionamento Teórico:</strong> Inspirado na termodinâmica estatística (METROPOLIS et al., 1953; KIRKPATRICK et al., 1983), o <em>Simulated Annealing</em> (SA) supera buscas gulosas simples (<em>Hill Climbing</em>) por aceitar soluções temporariamente piores para escapar de ótimos locais.</p>
+
+    <p>A transição para estados com custo superior ($\Delta f = f(\\mathcal{G}_{novo}) - f(\\mathcal{G}_{atual}) > 0$) segue o Critério de Metropolis:</p>
+
+    $$P(\\text{aceitar piora}) = e^{-\\frac{\\Delta f}{T}}$$
+
+    <p>Parâmetros propostos, a calibrar: $T_0 = 100$, $T_{final} = 1$, $\\lambda = 0,95$ (ou $\\alpha = 0,95$, tratando-se do mesmo símbolo em contextos diferentes; cerca de 90 níveis) e 250 iterações por temperatura (cerca de 22.500 avaliações).</p>
+
+    <p><strong>Estratégias de Geração de Vizinhança e Perturbação:</strong></p>
+    <ul>
+      <li><strong>Operador 1 - Troca Intra-Turma (<em>Swap Move</em>):</strong> Permuta os horários de duas aulas distintas da mesma turma. Preserva integralmente a carga horária semanal.</li>
+      <li><strong>Operador 2 - Deslocamento para Slot Livre (<em>Move to Free Slot</em>):</strong> Move uma aula para um período vago adjacente, aplicável apenas a turmas com slots livres.</li>
+      <li><strong>Blindagem Rígida:</strong> Movimentos que gerem violações hard — incluindo violações de disponibilidade e choque de professor — são sumariamente descartados ($P = 0$), assegurando busca exclusiva na região viável.</li>
+    </ul>
+
+    <h2>4.3 SÍNTESE COMPARATIVA DAS ABORDAGENS</h2>
+    <div class="caption-tabela">Tabela 1 – Comparativo técnico das abordagens algorítmicas adotadas.</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Critério de Análise</th>
+          <th>Fase 1: Construtiva Inspirada em Saturação</th>
+          <th>Fase 2: Simulated Annealing</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Família Algorítmica</strong></td>
+          <td>Heurística Construtiva Determinística</td>
+          <td>Metaheurística Estocástica de Trajetória</td>
+        </tr>
+        <tr>
+          <td><strong>Objetivo Primário</strong></td>
+          <td>Viabilidade física estrita ($Hard = 0$)</td>
+          <td>Minimização de janelas e preferências ($Soft$)</td>
+        </tr>
+        <tr>
+          <td><strong>Estado de Partida</strong></td>
+          <td>Grade completamente vazia ($\\emptyset$)</td>
+          <td>Grade viável gerada pela Fase 1</td>
+        </tr>
+        <tr>
+          <td><strong>Complexidade Temporal</strong></td>
+          <td>$O(N \\log N)$ (análise teórica)</td>
+          <td>$O(\\text{Iterações} \\times \\text{Custo}(\\Delta f))$</td>
+        </tr>
+        <tr>
+          <td><strong>Tratamento de Ótimo Local</strong></td>
+          <td>Inexistente (decisão estática)</td>
+          <td>Escape via Metropolis (sem garantia de ótimo global)</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="fonte-tabela">Fonte: Elaborado pelos autores (2026).</div>
+  </div>
+
+  <!-- PÁGINA 9: ANÁLISE TEÓRICA -->
+  <div class="a4-page">
+    <div class="page-number">9</div>
+    <h2>4.4 ANÁLISE TEÓRICA: LIMITES DE CUSTO, METROPOLIS E VIABILIDADE</h2>
+
+    <p><strong>1. Limite do Custo Soft:</strong> Por professor e dia, o número máximo de janelas ociosas é $Gap \\le 3$ (quando leciona apenas no período 1 e 5). Em 5 dias, o total é $\\le 15$ por professor. Para cada turma, o excesso diário da mesma matéria é $\\le 3$, totalizando $\\le 15$ por turma na semana. Como a penalidade de dia não preferido é no máximo 1 por aula (totalizando $N$), o custo soft total é rigorosamente delimitado por:</p>
+    $$\\text{Custo Soft} \\le 85 \\cdot 15 \\cdot |P| + 70 \\cdot 15 \\cdot |T| + 50 \\cdot N = 1.275 \\cdot |P| + 1.050 \\cdot |T| + 50 \\cdot N$$
+
+    <p>Exemplo com 10 turmas, 20 professores e $N = 250$ aulas:</p>
+    $$\\text{Custo Soft} \\le 1.275 \\cdot 20 + 1.050 \\cdot 10 + 50 \\cdot 250 = 25.500 + 10.500 + 12.500 = \\mathbf{48.500 < 100.000}$$
+    <p>Portanto, comprova-se que nenhuma grade viável desse cenário atinge custo superior a $W_{hard}$, garantindo $f(\\mathcal{G}) < W_{hard} \\iff$ viável.</p>
+
+    <p><strong>2. Comportamento Numérico de Metropolis:</strong> Para uma piora isolada de uma janela ($\\Delta f = 85$), a probabilidade de aceitação varia conforme $T$:</p>
+    <ul>
+      <li>Em $T = 100$: $P = e^{-85/100} \\approx 0,43$ (ampla exploração estocástica);</li>
+      <li>Em $T = 10$: $P = e^{-85/10} \\approx 2 \\times 10^{-4}$ (baixa tolerância a pioras);</li>
+      <li>Em $T = 1$: $P = e^{-85/1} \\approx 10^{-37}$ (convergência estrita para o mínimo local).</li>
+    </ul>
+    <p>Movimentos com violação hard têm $\\Delta f \\ge 100.000$ e $P \\approx 0$, inviabilizando transições ilegais.</p>
+
+    <p><strong>3. Preservação da Viabilidade:</strong> Como a Fase 2 descarta qualquer movimento com violação hard ($P = 0$), ela parte de uma semente com $Hard = 0$ fornecida pela Fase 1 e mantém essa viabilidade durante todas as iterações.</p>
+
+    <h1>5 CONSIDERAÇÕES FINAIS</h1>
+    <p>A formalização matemática e a estruturação em dois estágios proposta neste relatório propõem uma arquitetura para tratar o <em>School Timetabling Problem</em> de forma heurística, articulando uma formulação rigorosa de variáveis de decisão com restrições fortes e critérios de qualidade pedagógica. A integração entre a heurística construtiva na Fase 1 e a metaheurística de <em>Simulated Annealing</em> na Fase 2 busca atender tanto a integridade matemática da grade quanto a ergonomia e saúde do trabalho docente.</p>
+
+    <p><strong>Limitações e Trabalhos Futuros:</strong> Ressalta-se que o presente estudo constitui uma proposta formal e teórica, sem validação experimental ampla. Como passos subsequentes para a continuidade da pesquisa, estabelecem-se: (a) a execução de benchmarks computacionais formais com instâncias reais; (b) a calibração empírica dos pesos ($w_{gap}, w_{balance}, w_{pref}$) e parâmetros de resfriamento térmico através de análise de sensibilidade; e (c) a comparação sistemática de qualidade e tempo frente a solvers exatos de Programação Linear Inteira e algoritmos genéticos híbridos.</p>
+  </div>
+
+  <!-- PÁGINA 10: REFERÊNCIAS -->
+  <div class="a4-page">
+    <div class="page-number">10</div>
+    <h1>REFERÊNCIAS</h1>
+
+    <div style="font-size: 9.5pt; line-height: 1.35; margin-top: 0.8cm;">
+      <p style="text-indent: 0; margin-bottom: 1em;">
+        BRÉLAZ, Daniel. New methods to color the vertices of a graph. <strong>Communications of the ACM</strong>, New York, v. 22, n. 4, p. 251-256, 1979.
+      </p>
+      <p style="text-indent: 0; margin-bottom: 1em;">
+        BURKE, Edmund K.; NEWALL, J. P.; WEARE, R. F. Initialization strategies and diversity in evolutionary timetabling. <strong>Evolutionary Computation</strong>, Cambridge, v. 6, n. 1, p. 81-103, 1998.
+      </p>
+      <p style="text-indent: 0; margin-bottom: 1em;">
+        CARTER, Michael W.; LAPORTE, Gilbert; LEE, S. Y. Examination timetabling: algorithmic strategies and applications. <strong>Journal of the Operational Research Society</strong>, London, v. 47, n. 3, p. 373-383, 1996.
+      </p>
+      <p style="text-indent: 0; margin-bottom: 1em;">
+        EVEN, Shimon; ITAI, Alon; SHAMIR, Adi. On the complexity of timetable and multicommodity flow problems. <strong>SIAM Journal on Computing</strong>, Philadelphia, v. 5, n. 4, p. 691-703, 1976.
+      </p>
+      <p style="text-indent: 0; margin-bottom: 1em;">
+        KARP, Richard M. Reducibility among Combinatorial Problems. In: MILLER, Raymond E.; THATCHER, James W. (Ed.). <strong>Complexity of Computer Computations</strong>. New York: Plenum Press, 1972. p. 85-103.
+      </p>
+      <p style="text-indent: 0; margin-bottom: 1em;">
+        KIRKPATRICK, Scott; GELATT, C. Daniel; VECCHI, Mario P. Optimization by simulated annealing. <strong>Science</strong>, Washington, v. 220, n. 4598, p. 671-680, 1983.
+      </p>
+      <p style="text-indent: 0; margin-bottom: 1em;">
+        LEWIS, Rhydian. A survey of metaheuristic-based techniques for university timetabling problems. <strong>OR Spectrum</strong>, Heidelberg, v. 30, n. 1, p. 167-190, 2008.
+      </p>
+      <p style="text-indent: 0; margin-bottom: 1em;">
+        METROPOLIS, Nicholas; ROSENBLUTH, Arianna W.; ROSENBLUTH, Marshall N.; TELLER, Augusta H.; TELLER, Edward. Equation of state calculations by fast computing machines. <strong>The Journal of Chemical Physics</strong>, Melville, v. 21, n. 6, p. 1087-1092, 1953.
+      </p>
+      <p style="text-indent: 0; margin-bottom: 1em;">
+        PILLAY, Nelishia. A survey of school timetabling research. <strong>Annals of Operations Research</strong>, Dordrecht, v. 218, n. 1, p. 261-293, 2014.
+      </p>
+      <p style="text-indent: 0; margin-bottom: 1em;">
+        SCHAERF, Andrea. A survey of automated timetabling. <strong>Artificial Intelligence Review</strong>, Dordrecht, v. 13, n. 2, p. 87-127, 1999.
+      </p>
+      <p style="text-indent: 0; margin-bottom: 1em;">
+        TARDIF, Maurice; LESSARD, Claude. <strong>O trabalho docente: elementos para uma teoria da docência como profissão de interações humanas</strong>. 9. ed. Petrópolis: Vozes, 2014.
+      </p>
+    </div>
+  </div>
+
+</body>
+</html>
+'''
+
+with open(r"docs\relatorio-tecnico-heuristica-abnt.html", "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+print("HTML ABNT atualizado com sucesso!")

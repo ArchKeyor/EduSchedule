@@ -101,3 +101,12 @@ Quando o desenvolvedor disser no chat *"terminei meu trabalho"*, *"faça o que t
    - Marcar o **Kauê Loreno (Tech Lead)** como Reviewer.
    - ⚠️ Alertar explicitamente o desenvolvedor para **NÃO clicar em Merge**. O merge na `main` é exclusividade do Tech Lead (Kauê Loreno) na homologação e entrega às quartas-feiras (ciclo de sprint de terça a terça).
 
+---
+
+## 7. Protocolo de Criação de Apresentações e Slides (Método das 3 Camadas)
+
+Sempre que o Kauê pedir a criação ou ajuste de uma apresentação, pitch deck ou seminário, **a primeira ação obrigatória da IA é aplicar e guiar o processo pelo Método das 3 Camadas** (detalhado em `docs/apresentacoes/metodologia-3-camadas-apresentacoes.md`):
+1. **Camada 1 (Roteiro & Narrativa Crua):** Fechar 100% da história, dores, métricas e dados matemáticos em texto puro (Markdown). Nunca abrir PowerPoint nem pedir geração de slides para IA antes disso estar travado.
+2. **Camada 2 (Wireframe de Informação):** Mapear a função e anatomia de dados de cada slide (quais têm números gigantes, quais têm cards empilhados, equações ou tabelas).
+3. **Camada 3 (Design System & Render Visual):** Aplicar a casca estética (cards 3D com sombra flutuante, capa temática escura, breadcrumbs de navegação superior com destaque da seção ativa) através de prompts estruturados para IA de slides ou geração de PPTX.
+

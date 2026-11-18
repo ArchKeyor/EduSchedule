@@ -54,7 +54,7 @@ A fundamentação teórica da intratabilidade do agendamento de horários remont
 * As arestas $(u, v) \in E$ denotam conflitos mútuos (mesmo professor ou mesma turma curricular);
 * O conjunto de cores disponíveis corresponde ao total de *time slots* da semana.
 
-Aprofundando essa relação para o contexto escolar, Even, Itai e Shamir (1976, p. 695) demonstraram que a versão de decisão do problema de horários (*"Existe uma alocação sem conflitos com $k$ slots semanais?"*) é formalmente **NP-completo**, mesmo sob condições simplificadas em que todas as aulas possuem duração unitária e sem alocação de salas especiais. Subsequentemente, o problema de encontrar a grade de qualidade pedagógica ótima (minimizando restrições flexíveis) configura-se como **NP-difícil (*NP-hard*)**. Esse postulado matemático comprova a inviabilidade teórica da resolução por algoritmos determinísticos de força bruta, exigindo a adoção de estratégias aproximativas e heurísticas de busca.
+Aprofundando essa relação para o contexto escolar, Even, Itai e Shamir (1976, p. 695) demonstraram que a versão de decisão do problema de horários (*"Existe uma alocação sem conflitos com $k$ slots semanais?"*) é formalmente **NP-completo**, mesmo sob condições simplificadas em que todas as aulas possuem duração unitária e sem alocação de salas especiais — classificação canonicamente consolidada por Garey e Johnson (1979, p. 240) sob o problema fundamental **[SS18] Timetable Design**. Subsequentemente, o problema de encontrar a grade de qualidade pedagógica ótima (minimizando restrições flexíveis) configura-se como **NP-difícil (*NP-hard*)**. Esse postulado matemático comprova a inviabilidade teórica da resolução por algoritmos determinísticos de força bruta, exigindo a adoção de estratégias aproximativas e heurísticas de busca.
 
 ### 2.3. Heurísticas Construtivas e o Princípio de Saturação
 
@@ -89,7 +89,7 @@ Carter et al. (1996) demonstraram que heurísticas construtivas ordenadas atinge
 
 Conforme consolidado por Rhydian Lewis (2008, p. 12) e Edmund Burke et al. (1998, p. 85), o estado da arte para resolução de timetabling em sistemas práticos consagrou a **arquitetura híbrida em dois estágios** (Figura 1):
 * **Fase 1 (Construtiva):** O algoritmo guloso gera uma grade viável de largada (*Warm Start*), eliminando todos os conflitos de restrições rígidas;
-* **Fase 2 (Busca Local / Meta-heurística):** Algoritmos como *Simulated Annealing* ou *Tabu Search* (MICHALEWICZ; FOGEL, 2004) partem da grade viável e executam permutações de vizinhança (*swap moves*) unicamente para polir as restrições fracas (eliminar janelas e equilibrar horários).
+* **Fase 2 (Busca Local / Meta-heurística):** Algoritmos como *Simulated Annealing* aplicado a grades escolares (ABRAMSON, 1991) ou meta-heurísticas combinadas (MICHALEWICZ; FOGEL, 2004) partem da grade viável e executam permutações de vizinhança (*swap moves*) unicamente para polir as restrições fracas (eliminar janelas e equilibrar horários).
 
 Burke et al. (1998) comprovaram empiricamente que alimentar o estágio de busca local com uma semente proveniente de uma heurística construtiva de saturação produz resultados significativamente superiores a inicializações aleatórias, evitando que o algoritmo desperdice ciclos computacionais tentando resolver choques básicos.
 
@@ -171,13 +171,15 @@ O presente trabalho demonstrou a viabilidade técnica e teórica do desenvolvime
 A implementação da heurística construtiva gulosa baseada no princípio de *Fail-First* comprovou que a primeira fase de resolução atinge 100% de conformidade com as restrições rígidas em menos de 100 milissegundos, gerando uma semente válida (*warm start*) para a continuidade da pesquisa.
 
 Para os próximos passos de desenvolvimento do projeto, estabelecem-se as seguintes frentes de trabalho:
-1. **Implementação da Fase 2 de Otimização (Busca Local):** Calibração de operadores de vizinhança (*swap moves*) guiados por meta-heurísticas de *Simulated Annealing* para minimizar penalidades de restrições flexíveis, com foco direto na eliminação de janelas vagas na jornada dos professores (conforme fundamentado por Tardif e Lessard);
+1. **Implementação da Fase 2 de Otimização (Busca Local):** Calibração de operadores de vizinhança (*swap moves*) guiados pela formulação de *Simulated Annealing* adaptada ao timetabling escolar (ABRAMSON, 1991) para minimizar penalidades de restrições flexíveis, com foco direto na eliminação de janelas vagas na jornada dos professores (conforme fundamentado por Tardif e Lessard);
 2. **Conclusão da Matriz Visual Interativa:** Finalização do componente de exibição e manipulação direta de grade no frontend React;
 3. **Evolução Arquitetural e Solvers Modernos:** Avaliação de viabilidade para plugar o solucionador **CP-SAT do Google OR-Tools** como uma implementação alternativa sob o padrão *Strategy*, comparando desempenho e qualidade de solução frente à heurística construtiva nativa em Python.
 
 ---
 
 ## Referências Bibliográficas
+
+ABRAMSON, David. Constructing school timetables using simulated annealing: sequential and parallel algorithms. **Management Science**, Catonsville, v. 37, n. 1, p. 98-113, 1991.
 
 BRÉLAZ, Daniel. New methods to color the vertices of a graph. **Communications of the ACM**, New York, v. 22, n. 4, p. 251-256, 1979.
 
@@ -190,6 +192,8 @@ DI GASPERO, Luca; BONUTTI, Alessandro; DE CESCO, Federico; SCHAERF, Andrea. The 
 EVEN, Shimon; ITAI, Alon; SHAMIR, Adi. On the complexity of timetable and multicommodity flow problems. **SIAM Journal on Computing**, Philadelphia, v. 5, n. 4, p. 691-703, 1976.
 
 GAMMA, Erich; HELM, Richard; JOHNSON, Ralph; VLISSIDES, John. **Design Patterns: Elements of Reusable Object-Oriented Software**. Reading: Addison-Wesley, 1994.
+
+GAREY, Michael R.; JOHNSON, David S. **Computers and Intractability: A Guide to the Theory of NP-Completeness**. San Francisco: W. H. Freeman and Company, 1979.
 
 KARP, Richard M. Reducibility among Combinatorial Problems. In: MILLER, Raymond E.; THATCHER, James W. (Ed.). **Complexity of Computer Computations**. New York: Plenum Press, 1972. p. 85-103.
 
