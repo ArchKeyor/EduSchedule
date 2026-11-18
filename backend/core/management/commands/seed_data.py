@@ -127,6 +127,7 @@ class Command(BaseCommand):
             (created_subjects['ART'], created_teachers['Profª. Laura Meireles'], 1),
         ]
         for subj, teach, hours in curric_3a:
+            subj.teachers.add(teach)
             CurriculumRequirement.objects.update_or_create(
                 school_class=c3a, subject=subj,
                 defaults={'teacher': teach, 'weekly_lessons': hours, 'double_lessons_allowed': True}

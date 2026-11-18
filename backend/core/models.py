@@ -115,6 +115,12 @@ class Subject(models.Model):
     code = models.CharField(max_length=10, verbose_name="Código / Sigla") # MAT, FIS, etc.
     color = models.CharField(max_length=20, default="#3B82F6")
     requires_lab = models.BooleanField(default=False, verbose_name="Requer Laboratório")
+    teachers = models.ManyToManyField(
+        Teacher,
+        related_name='subjects',
+        blank=True,
+        verbose_name="Professores Habilitados"
+    )
 
     class Meta:
         verbose_name = "Disciplina"

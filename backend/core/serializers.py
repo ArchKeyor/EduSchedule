@@ -20,6 +20,7 @@ class TeacherAvailabilitySerializer(serializers.ModelSerializer):
 class TeacherSerializer(serializers.ModelSerializer):
     availabilities = TeacherAvailabilitySerializer(many=True, read_only=True)
     allocated_hours = serializers.SerializerMethodField()
+    subject_details = serializers.SerializerMethodField()
 
     class Meta:
         model = Teacher
@@ -27,6 +28,17 @@ class TeacherSerializer(serializers.ModelSerializer):
 
     def get_allocated_hours(self, obj):
         return sum(req.weekly_lessons for req in obj.curriculum_assignments.all())
+
+    def get_subject_details(self, obj):
+        return [
+            {
+                'id': s.id,
+                'name': s.name,
+                'code': s.code,
+                'color': s.color,
+            }
+            for s in obj.subjects.all()
+        ]
 
 
 class TimeSlotSerializer(serializers.ModelSerializer):
@@ -44,9 +56,22 @@ class ShiftSerializer(serializers.ModelSerializer):
 
 
 class SubjectSerializer(serializers.ModelSerializer):
+    teacher_details = serializers.SerializerMethodField()
+
     class Meta:
         model = Subject
         fields = '__all__'
+
+    def get_teacher_details(self, obj):
+        return [
+            {
+                'id': t.id,
+                'name': t.name,
+                'avatar_initials': t.avatar_initials,
+                'color': t.color,
+            }
+            for t in obj.teachers.all()
+        ]
 
 
 class CurriculumRequirementSerializer(serializers.ModelSerializer):

@@ -1336,6 +1336,7 @@ export const AdminPanelPage: React.FC<AdminPanelPageProps> = ({
         }}
         onSaved={loadAdminData}
         subjectToEdit={subjectToEdit}
+        teachers={teachers}
       />
 
       <NewCurriculumModal

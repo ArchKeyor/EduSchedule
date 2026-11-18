@@ -122,9 +122,23 @@ export async function createShift(shift: Partial<Shift>): Promise<Shift> {
   return res.json();
 }
 
+export async function updateShift(id: number, shift: Partial<Shift>): Promise<Shift> {
+  const res = await fetch(`${API_BASE}/shifts/${id}/`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(shift)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const msg = Object.values(err).flat().join(', ') || 'Falha ao atualizar turno';
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
 export async function deleteShift(id: number): Promise<void> {
   const res = await fetch(`${API_BASE}/shifts/${id}/`, { method: 'DELETE' });
-  if (!res.ok) throw new Error('Falha ao excluir turno');
+  if (!res.ok && res.status !== 204) throw new Error('Falha ao excluir turno');
 }
 
 export async function getSlots(): Promise<TimeSlot[]> {
@@ -147,9 +161,36 @@ export async function createSlot(slot: Partial<TimeSlot>): Promise<TimeSlot> {
   return res.json();
 }
 
+export async function updateSlot(id: number, slot: Partial<TimeSlot>): Promise<TimeSlot> {
+  const res = await fetch(`${API_BASE}/slots/${id}/`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(slot)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const msg = Object.values(err).flat().join(', ') || 'Falha ao atualizar slot de aula';
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function reorderSlots(slotIds: number[]): Promise<TimeSlot[]> {
+  const res = await fetch(`${API_BASE}/slots/reorder/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slot_ids: slotIds })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Falha ao reordenar slots');
+  }
+  return res.json();
+}
+
 export async function deleteSlot(id: number): Promise<void> {
   const res = await fetch(`${API_BASE}/slots/${id}/`, { method: 'DELETE' });
-  if (!res.ok) throw new Error('Falha ao excluir slot de aula');
+  if (!res.ok && res.status !== 204) throw new Error('Falha ao excluir slot de aula');
 }
 
 export async function getClasses(): Promise<SchoolClass[]> {
@@ -455,9 +496,12 @@ export const api = {
   batchCreateTeachers,
   getShifts,
   createShift,
+  updateShift,
   deleteShift,
   getSlots,
   createSlot,
+  updateSlot,
+  reorderSlots,
   deleteSlot,
   getClasses,
   createClass,
