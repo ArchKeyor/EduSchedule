@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import type { TimetableSchedule, SchoolClass, Teacher, ClassRoom, TimeSlot, Subject } from '../types';
+import type { TimetableSchedule, SchoolClass, Teacher, ClassRoom, TimeSlot, Subject, Shift, TimetableSlotAssignment } from '../types';
 import {
   CheckSquare, Plus, Trash2, Sparkles, Loader2, RefreshCw, CheckCircle2,
-  Calendar, AlertTriangle, Users, BookOpen, Clock
+  Calendar, AlertTriangle, Users, BookOpen, Clock, LayoutGrid
 } from 'lucide-react';
 import { ManualLessonModal } from '../components/ManualLessonModal';
 import { api, runSolver } from '../services/api';
@@ -13,6 +13,7 @@ interface TimetablePageProps {
   teachers: Teacher[];
   rooms: ClassRoom[];
   slots: TimeSlot[];
+  shifts?: Shift[];
   subjects?: Subject[];
   onRunSolver?: () => Promise<void> | void;
   onRefresh?: () => void;
@@ -140,6 +141,7 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({
   teachers,
   rooms,
   slots,
+  shifts = [],
   subjects,
   onRunSolver,
   onRefresh,
@@ -148,7 +150,7 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({
   const effectiveClasses = classes.length > 0 ? classes : DEFAULT_CLASSES;
   const effectiveSlots = slots.length > 0 ? slots : DEFAULT_SLOTS;
 
-  const [viewMode, setViewMode] = useState<'turma' | 'prof' | 'sala'>('turma');
+  const [viewMode, setViewMode] = useState<'turma' | 'all' | 'prof' | 'sala'>('turma');
   const [selectedEntityId, setSelectedEntityId] = useState<number>(effectiveClasses[0]?.id || 1);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [internalSolving, setInternalSolving] = useState(false);
@@ -191,11 +193,11 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({
     }
   };
 
-  const handleOpenManualModal = (dayId?: number, slotId?: number) => {
+  const handleOpenManualModal = (dayId?: number, slotId?: number, overrideClassId?: number) => {
     setSelectedSlotContext({
       dayId,
       slotId,
-      classId: viewMode === 'turma' ? selectedEntityId : undefined,
+      classId: overrideClassId ?? (viewMode === 'turma' ? selectedEntityId : undefined),
       teacherId: viewMode === 'prof' ? selectedEntityId : undefined,
       roomId: viewMode === 'sala' ? selectedEntityId : undefined,
     });
@@ -220,25 +222,180 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({
     { id: 4, name: 'Sexta-feira', shortName: 'Sex' },
   ];
 
+  const getSlotsForClass = (schoolClass?: SchoolClass) => {
+    if (!schoolClass) return effectiveSlots.slice().sort((a, b) => a.order - b.order);
+    const matching = effectiveSlots.filter(s => s.shift === schoolClass.shift);
+    return matching.slice().sort((a, b) => a.order - b.order);
+  };
+
+  const selectedClassObj = effectiveClasses.find(c => c.id === selectedEntityId);
+  const currentViewSlots =
+    viewMode === 'turma' && selectedClassObj
+      ? getSlotsForClass(selectedClassObj)
+      : effectiveSlots.slice().sort((a, b) => a.shift - b.shift || a.order - b.order);
+
   const filteredAssignments = schedule?.assignments?.filter(a => {
+    if (viewMode === 'all') return true;
     if (viewMode === 'turma') {
-      const selectedClass = effectiveClasses.find(c => c.id === selectedEntityId);
-      return a.school_class === selectedEntityId || (selectedClass && a.class_name === selectedClass.name);
+      return a.school_class === selectedEntityId || (selectedClassObj && a.class_name === selectedClassObj.name);
     }
     if (viewMode === 'prof') return a.teacher === selectedEntityId;
     if (viewMode === 'sala') return a.room === selectedEntityId;
     return true;
   }) || [];
 
-  const getAssignment = (dayId: number, slot: TimeSlot) => {
-    return filteredAssignments.find(a =>
+  const getAssignmentForList = (list: TimetableSlotAssignment[], dayId: number, slot: TimeSlot) => {
+    return list.find(a =>
       a.day_of_week === dayId &&
-      (a.time_slot === slot.id || a.slot_order === slot.order)
+      (a.time_slot === slot.id || (!a.time_slot && a.slot_order === slot.order))
     );
   };
 
-  const selectedClassName = effectiveClasses.find(c => c.id === selectedEntityId)?.name || '3º Ano A';
+  const selectedClassName =
+    viewMode === 'all'
+      ? `Todas as Turmas (${effectiveClasses.length})`
+      : viewMode === 'prof'
+      ? (teachers.find(t => t.id === selectedEntityId)?.name || 'Docente')
+      : (selectedClassObj?.name || '3º Ano A');
+
+  const expectedLessonsCount =
+    viewMode === 'all'
+      ? effectiveClasses.reduce((acc, c) => acc + (c.total_weekly_lessons || 0), 0)
+      : viewMode === 'turma'
+      ? (selectedClassObj?.total_weekly_lessons || 0)
+      : filteredAssignments.length;
+
   const totalAllocatedForCurrentView = filteredAssignments.length;
+
+  const renderTimetableMatrix = (
+    targetSlots: TimeSlot[],
+    assignmentsList: TimetableSlotAssignment[],
+    classIdForManual?: number
+  ) => (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left border-collapse min-w-[950px]">
+        <thead>
+          <tr className="bg-slate-50 border-b border-slate-200 text-xs text-slate-600 uppercase tracking-wider font-bold">
+            <th className="p-3.5 w-32 text-center border-r border-slate-200 bg-slate-100/70">
+              <div className="flex items-center justify-center space-x-1.5 text-slate-700">
+                <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Período</span>
+              </div>
+            </th>
+            {days.map(d => (
+              <th key={d.id} className="p-3.5 text-center border-r border-slate-200 last:border-r-0">
+                <span className="hidden sm:inline">{d.name}</span>
+                <span className="sm:hidden">{d.shortName}</span>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-200 text-xs">
+          {targetSlots.map(slot => {
+            if (slot.is_break) {
+              return (
+                <tr key={slot.id || `slot-break-${slot.order}`} className="bg-slate-100/70">
+                  <td className="p-2.5 text-center font-bold text-slate-500 bg-slate-100 border-r border-slate-200 text-[11px]">
+                    {slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}
+                  </td>
+                  <td colSpan={5} className="p-2.5 text-center text-xs font-bold text-slate-500 tracking-wider uppercase">
+                    ☕ {slot.name} ({slot.duration_minutes} min)
+                  </td>
+                </tr>
+              );
+            }
+
+            return (
+              <tr key={slot.id || `slot-${slot.order}`} className="hover:bg-slate-50/40 transition">
+                <td className="p-3.5 text-center font-bold text-slate-800 bg-slate-50/90 border-r border-slate-200">
+                  <div className="text-xs text-indigo-950 font-extrabold">{slot.name}</div>
+                  <div className="text-[11px] font-semibold text-slate-500 mt-0.5">
+                    {slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}
+                  </div>
+                </td>
+
+                {days.map(d => {
+                  const assignment = getAssignmentForList(assignmentsList, d.id, slot);
+                  const subjectColor = assignment?.subject_color || '#4F46E5';
+
+                  return (
+                    <td key={d.id} className="p-2 border-r border-slate-200 last:border-r-0 align-top min-w-[160px]">
+                      {assignment ? (
+                        <div
+                          className="rounded-xl p-3 hover:shadow-md transition-all relative group border"
+                          style={{
+                            backgroundColor: `${subjectColor}14`,
+                            borderColor: `${subjectColor}40`,
+                            borderLeftWidth: '4px',
+                            borderLeftColor: subjectColor,
+                          }}
+                        >
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteAssignment(assignment.id);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-1 bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-md transition absolute top-2 right-2 cursor-pointer shadow-2xs border border-slate-200"
+                            title="Remover aula"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+
+                          {assignment.has_conflict && (
+                            <div
+                              className="absolute -top-2 -left-1 bg-amber-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow-xs flex items-center space-x-0.5"
+                              title={assignment.conflict_message || 'Aviso de horário'}
+                            >
+                              <AlertTriangle className="w-2.5 h-2.5 inline mr-0.5" />
+                              <span>Janela</span>
+                            </div>
+                          )}
+
+                          <div className="flex justify-between items-start pr-5">
+                            <span className="font-extrabold text-slate-900 text-xs leading-snug line-clamp-1">
+                              {assignment.subject_name}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span
+                              className="text-[10px] text-white px-1.5 py-0.5 rounded-md font-mono font-black shadow-2xs"
+                              style={{ backgroundColor: subjectColor }}
+                            >
+                              {assignment.subject_code}
+                            </span>
+                            {assignment.is_manual_override && (
+                              <span className="text-[9px] bg-slate-200 text-slate-700 px-1 py-0.5 rounded font-semibold">
+                                Manual
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="text-[11px] font-semibold text-slate-700 mt-2 truncate flex items-center gap-1">
+                            <span className="text-slate-400">👤</span>
+                            <span>{viewMode === 'prof' ? assignment.class_name : assignment.teacher_name}</span>
+                          </p>
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => handleOpenManualModal(d.id, slot.id, classIdForManual)}
+                          className="h-20 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 hover:bg-indigo-50/50 hover:border-indigo-300 hover:text-indigo-600 flex flex-col items-center justify-center text-slate-400 text-[11px] cursor-pointer transition group"
+                        >
+                          <Plus className="w-4 h-4 mb-0.5 text-slate-300 group-hover:text-indigo-600 transition" />
+                          <span className="font-medium text-[10px] text-slate-400 group-hover:text-indigo-600">Livre</span>
+                        </div>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -292,7 +449,7 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({
             ) : (
               <>
                 <Sparkles className="w-4 h-4 text-amber-300" />
-                <span>Gerar Grade Automática</span>
+                <span>Gerar Grade (Todas as Turmas)</span>
               </>
             )}
           </button>
@@ -351,7 +508,9 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs hover:border-indigo-200 transition">
           <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
             <span className="font-semibold">Aulas Alocadas ({selectedClassName})</span>
-            <span className="text-indigo-600 font-bold">{totalAllocatedForCurrentView} / 25 aulas</span>
+            <span className="text-indigo-600 font-bold">
+              {totalAllocatedForCurrentView} / {expectedLessonsCount || totalAllocatedForCurrentView} aulas
+            </span>
           </div>
           <div className="text-2xl font-extrabold text-slate-900">
             {totalAllocatedForCurrentView > 0 ? `${totalAllocatedForCurrentView} Aulas` : 'Aguardando Solver'}
@@ -383,6 +542,16 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({
               </button>
               <button
                 type="button"
+                onClick={() => setViewMode('all')}
+                className={`px-3 py-1.5 rounded-md font-semibold transition cursor-pointer flex items-center space-x-1 ${
+                  viewMode === 'all' ? 'bg-white text-indigo-600 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>Todas as Turmas</span>
+              </button>
+              <button
+                type="button"
                 onClick={() => {
                   setViewMode('prof');
                   if (teachers[0]) setSelectedEntityId(teachers[0].id);
@@ -411,29 +580,31 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({
           </div>
 
           {/* Dropdown de Seleção de Turma (Tarefa D4) */}
-          <div className="flex items-center space-x-2">
-            <label htmlFor="select-class-filter" className="text-xs font-semibold text-slate-500">
-              {viewMode === 'turma' ? 'Turma:' : viewMode === 'prof' ? 'Docente:' : 'Espaço:'}
-            </label>
-            <select
-              id="select-class-filter"
-              value={selectedEntityId}
-              onChange={(e) => setSelectedEntityId(Number(e.target.value))}
-              className="bg-indigo-50/60 hover:bg-indigo-50 border border-indigo-200 text-indigo-950 font-bold rounded-lg px-3.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-2xs"
-            >
-              {viewMode === 'turma' && effectiveClasses.map(c => (
-                <option key={c.id} value={c.id}>
-                  📚 {c.name} {c.grade_level ? `(${c.grade_level})` : ''}
-                </option>
-              ))}
-              {viewMode === 'prof' && teachers.map(t => (
-                <option key={t.id} value={t.id}>👨‍🏫 {t.name}</option>
-              ))}
-              {viewMode === 'sala' && rooms.map(r => (
-                <option key={r.id} value={r.id}>🏢 {r.name} ({r.block})</option>
-              ))}
-            </select>
-          </div>
+          {viewMode !== 'all' && (
+            <div className="flex items-center space-x-2">
+              <label htmlFor="select-class-filter" className="text-xs font-semibold text-slate-500">
+                {viewMode === 'turma' ? 'Turma:' : viewMode === 'prof' ? 'Docente:' : 'Espaço:'}
+              </label>
+              <select
+                id="select-class-filter"
+                value={selectedEntityId}
+                onChange={(e) => setSelectedEntityId(Number(e.target.value))}
+                className="bg-indigo-50/60 hover:bg-indigo-50 border border-indigo-200 text-indigo-950 font-bold rounded-lg px-3.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-2xs"
+              >
+                {viewMode === 'turma' && effectiveClasses.map(c => (
+                  <option key={c.id} value={c.id}>
+                    📚 {c.name} {c.grade_level ? `(${c.grade_level})` : ''}
+                  </option>
+                ))}
+                {viewMode === 'prof' && teachers.map(t => (
+                  <option key={t.id} value={t.id}>👨‍🏫 {t.name}</option>
+                ))}
+                {viewMode === 'sala' && rooms.map(r => (
+                  <option key={r.id} value={r.id}>🏢 {r.name} ({r.block})</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-3 text-xs">
@@ -457,136 +628,52 @@ export const TimetablePage: React.FC<TimetablePageProps> = ({
       </section>
 
       {/* Timetable Grid Matrix with Real API Data, Colors & Teachers (Tarefa D3) */}
-      <section className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[950px]">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-xs text-slate-600 uppercase tracking-wider font-bold">
-                <th className="p-3.5 w-32 text-center border-r border-slate-200 bg-slate-100/70">
-                  <div className="flex items-center justify-center space-x-1.5 text-slate-700">
-                    <Calendar className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>Período</span>
+      {viewMode === 'all' ? (
+        <div className="space-y-6">
+          {effectiveClasses.map((cls) => {
+            const clsSlots = getSlotsForClass(cls);
+            const clsAssignments = (schedule?.assignments || []).filter(
+              a => a.school_class === cls.id || a.class_name === cls.name
+            );
+            const shiftName = shifts.find(s => s.id === cls.shift)?.name || cls.shift_name || 'Turno';
+
+            return (
+              <section key={cls.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+                <div className="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center space-x-2.5">
+                    <span className="text-sm font-extrabold text-slate-900">📚 {cls.name}</span>
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                      {shiftName}
+                    </span>
+                    <span className="text-xs text-slate-500">{cls.grade_level}</span>
                   </div>
-                </th>
-                {days.map(d => (
-                  <th key={d.id} className="p-3.5 text-center border-r border-slate-200 last:border-r-0">
-                    <span className="hidden sm:inline">{d.name}</span>
-                    <span className="sm:hidden">{d.shortName}</span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 text-xs">
-              {effectiveSlots.map(slot => {
-                if (slot.is_break) {
-                  return (
-                    <tr key={slot.id || `slot-break-${slot.order}`} className="bg-slate-100/70">
-                      <td className="p-2.5 text-center font-bold text-slate-500 bg-slate-100 border-r border-slate-200 text-[11px]">
-                        {slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}
-                      </td>
-                      <td colSpan={5} className="p-2.5 text-center text-xs font-bold text-slate-500 tracking-wider uppercase">
-                        ☕ {slot.name} ({slot.duration_minutes} min)
-                      </td>
-                    </tr>
-                  );
-                }
+                  <div className="text-xs font-bold text-slate-700">
+                    {clsAssignments.length} / {cls.total_weekly_lessons || 0} aulas alocadas
+                  </div>
+                </div>
 
-                return (
-                  <tr key={slot.id || `slot-${slot.order}`} className="hover:bg-slate-50/40 transition">
-                    <td className="p-3.5 text-center font-bold text-slate-800 bg-slate-50/90 border-r border-slate-200">
-                      <div className="text-xs text-indigo-950 font-extrabold">{slot.name}</div>
-                      <div className="text-[11px] font-semibold text-slate-500 mt-0.5">
-                        {slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}
-                      </div>
-                    </td>
-
-                    {days.map(d => {
-                      const assignment = getAssignment(d.id, slot);
-                      const subjectColor = assignment?.subject_color || '#4F46E5';
-
-                      return (
-                        <td key={d.id} className="p-2 border-r border-slate-200 last:border-r-0 align-top min-w-[160px]">
-                          {assignment ? (
-                            <div
-                              className="rounded-xl p-3 hover:shadow-md transition-all relative group border"
-                              style={{
-                                backgroundColor: `${subjectColor}14`,
-                                borderColor: `${subjectColor}40`,
-                                borderLeftWidth: '4px',
-                                borderLeftColor: subjectColor,
-                              }}
-                            >
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteAssignment(assignment.id);
-                                }}
-                                className="opacity-0 group-hover:opacity-100 p-1 bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-md transition absolute top-2 right-2 cursor-pointer shadow-2xs border border-slate-200"
-                                title="Remover aula"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-
-                              {assignment.has_conflict && (
-                                <div
-                                  className="absolute -top-2 -left-1 bg-amber-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shadow-xs flex items-center space-x-0.5"
-                                  title={assignment.conflict_message || 'Aviso de horário'}
-                                >
-                                  <AlertTriangle className="w-2.5 h-2.5 inline mr-0.5" />
-                                  <span>Janela</span>
-                                </div>
-                              )}
-
-                              <div className="flex justify-between items-start pr-5">
-                                <span className="font-extrabold text-slate-900 text-xs leading-snug line-clamp-1">
-                                  {assignment.subject_name}
-                                </span>
-                              </div>
-
-                              <div className="flex items-center gap-1.5 mt-1">
-                                <span
-                                  className="text-[10px] text-white px-1.5 py-0.5 rounded-md font-mono font-black shadow-2xs"
-                                  style={{ backgroundColor: subjectColor }}
-                                >
-                                  {assignment.subject_code}
-                                </span>
-                                {assignment.is_manual_override && (
-                                  <span className="text-[9px] bg-slate-200 text-slate-700 px-1 py-0.5 rounded font-semibold">
-                                    Manual
-                                  </span>
-                                )}
-                              </div>
-
-                              <p className="text-[11px] font-semibold text-slate-700 mt-2 truncate flex items-center gap-1">
-                                <span className="text-slate-400">👤</span>
-                                <span>{viewMode === 'prof' ? assignment.class_name : assignment.teacher_name}</span>
-                              </p>
-
-                              <p className="text-[10px] text-slate-500 mt-0.5 truncate flex items-center gap-1">
-                                <span className="text-slate-400">🏢</span>
-                                <span>{assignment.room_name ? `${assignment.room_name} (${assignment.room_block})` : 'Sala Padrão'}</span>
-                              </p>
-                            </div>
-                          ) : (
-                            <div
-                              onClick={() => handleOpenManualModal(d.id, slot.id)}
-                              className="h-20 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 hover:bg-indigo-50/50 hover:border-indigo-300 hover:text-indigo-600 flex flex-col items-center justify-center text-slate-400 text-[11px] cursor-pointer transition group"
-                            >
-                              <Plus className="w-4 h-4 mb-0.5 text-slate-300 group-hover:text-indigo-600 transition" />
-                              <span className="font-medium text-[10px] text-slate-400 group-hover:text-indigo-600">Livre</span>
-                            </div>
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                {clsSlots.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-amber-800 bg-amber-50/60">
+                    Nenhum slot cadastrado para o turno <strong>{shiftName}</strong> desta turma. Cadastre horários em "Slots & Grade".
+                  </div>
+                ) : (
+                  renderTimetableMatrix(clsSlots, clsAssignments, cls.id)
+                )}
+              </section>
+            );
+          })}
         </div>
-      </section>
+      ) : (
+        <section className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+          {currentViewSlots.length === 0 ? (
+            <div className="p-8 text-center text-xs text-amber-800 bg-amber-50/60">
+              Nenhum slot cadastrado para o turno desta turma. Configure os horários em "Slots & Grade".
+            </div>
+          ) : (
+            renderTimetableMatrix(currentViewSlots, filteredAssignments)
+          )}
+        </section>
+      )}
 
       {/* Constraints & Optimization Weights Info */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">

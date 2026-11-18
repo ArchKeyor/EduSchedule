@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Clock, Coffee, Plus, Loader2, AlertCircle } from 'lucide-react';
+import { X, Clock, Coffee, Plus, Pencil, Loader2, AlertCircle } from 'lucide-react';
 import type { Shift, TimeSlot } from '../types';
 import { api } from '../services/api';
 
@@ -9,6 +9,7 @@ interface NewSlotModalProps {
   shifts: Shift[];
   activeShiftId?: number;
   existingSlotsCount?: number;
+  slotToEdit?: TimeSlot | null;
   onSlotCreated: (slot: TimeSlot) => void;
 }
 
@@ -18,8 +19,10 @@ export const NewSlotModal: React.FC<NewSlotModalProps> = ({
   shifts,
   activeShiftId,
   existingSlotsCount = 0,
+  slotToEdit,
   onSlotCreated,
 }) => {
+  const isEditing = Boolean(slotToEdit);
   const [shiftId, setShiftId] = useState<number>(activeShiftId || shifts[0]?.id || 1);
   const [order, setOrder] = useState<number>(existingSlotsCount + 1);
   const [name, setName] = useState('');
@@ -35,17 +38,32 @@ export const NewSlotModal: React.FC<NewSlotModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      if (activeShiftId) setShiftId(activeShiftId);
-      const nextOrder = existingSlotsCount + 1;
-      setOrder(nextOrder);
-      setName(`${nextOrder}º Período`);
-      setIsBreak(false);
-      setAllowDoubleLesson(true);
-      setRequiresLab(false);
+      if (slotToEdit) {
+        setShiftId(slotToEdit.shift);
+        setOrder(slotToEdit.order);
+        setName(slotToEdit.name);
+        setStartTime(slotToEdit.start_time?.slice(0, 5) || '07:15');
+        setEndTime(slotToEdit.end_time?.slice(0, 5) || '08:05');
+        setDurationMinutes(slotToEdit.duration_minutes || 50);
+        setIsBreak(slotToEdit.is_break);
+        setAllowDoubleLesson(slotToEdit.allow_double_lesson);
+        setRequiresLab(slotToEdit.requires_lab);
+      } else {
+        if (activeShiftId) setShiftId(activeShiftId);
+        const nextOrder = existingSlotsCount + 1;
+        setOrder(nextOrder);
+        setName(`${nextOrder}º Período`);
+        setStartTime('07:15');
+        setEndTime('08:05');
+        setDurationMinutes(50);
+        setIsBreak(false);
+        setAllowDoubleLesson(true);
+        setRequiresLab(false);
+      }
       setErrorMessage(null);
       setLoading(false);
     }
-  }, [isOpen, activeShiftId, existingSlotsCount]);
+  }, [isOpen, activeShiftId, existingSlotsCount, slotToEdit]);
 
   // Recalculate duration when times change
   useEffect(() => {
@@ -86,8 +104,10 @@ export const NewSlotModal: React.FC<NewSlotModalProps> = ({
         requires_lab: requiresLab,
       };
 
-      const newSlot = await api.createSlot(payload);
-      onSlotCreated(newSlot);
+      const savedSlot = isEditing && slotToEdit
+        ? await api.updateSlot(slotToEdit.id, payload)
+        : await api.createSlot(payload);
+      onSlotCreated(savedSlot);
       onClose();
     } catch (err: any) {
       setErrorMessage(err.message || 'Erro ao criar slot de aula');
@@ -106,11 +126,17 @@ export const NewSlotModal: React.FC<NewSlotModalProps> = ({
         <div className="px-6 py-4 bg-gradient-to-r from-indigo-50 to-white border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
-              <Clock className="w-5 h-5" />
+              {isEditing ? <Pencil className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">Novo Período / Slot</h2>
-              <p className="text-xs text-slate-500">Configure um tempo de aula ou intervalo no turno escolar.</p>
+              <h2 className="text-base font-bold text-slate-900">
+                {isEditing ? 'Editar Período / Slot' : 'Novo Período / Slot'}
+              </h2>
+              <p className="text-xs text-slate-500">
+                {isEditing
+                  ? 'Atualize os horários, ordem ou regras deste slot.'
+                  : 'Configure um tempo de aula ou intervalo no turno escolar.'}
+              </p>
             </div>
           </div>
           <button
@@ -273,8 +299,8 @@ export const NewSlotModal: React.FC<NewSlotModalProps> = ({
                 </>
               ) : (
                 <>
-                  <Plus className="w-4 h-4" />
-                  <span>Adicionar Slot</span>
+                  {isEditing ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  <span>{isEditing ? 'Salvar Alterações' : 'Adicionar Slot'}</span>
                 </>
               )}
             </button>

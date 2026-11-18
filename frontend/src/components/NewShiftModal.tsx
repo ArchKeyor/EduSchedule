@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Sun, Plus, Loader2, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Sun, Plus, Pencil, Loader2, AlertCircle } from 'lucide-react';
 import type { Shift } from '../types';
 import { api } from '../services/api';
 
@@ -7,18 +7,37 @@ interface NewShiftModalProps {
   isOpen: boolean;
   onClose: () => void;
   onShiftCreated: (shift: Shift) => void;
+  shiftToEdit?: Shift | null;
 }
 
 export const NewShiftModal: React.FC<NewShiftModalProps> = ({
   isOpen,
   onClose,
   onShiftCreated,
+  shiftToEdit,
 }) => {
+  const isEditing = Boolean(shiftToEdit);
   const [name, setName] = useState('');
   const [startTime, setStartTime] = useState('13:00');
   const [endTime, setEndTime] = useState('18:00');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (shiftToEdit) {
+        setName(shiftToEdit.name || '');
+        setStartTime(shiftToEdit.start_time?.slice(0, 5) || '07:15');
+        setEndTime(shiftToEdit.end_time?.slice(0, 5) || '12:00');
+      } else {
+        setName('');
+        setStartTime('13:00');
+        setEndTime('18:00');
+      }
+      setErrorMessage(null);
+      setLoading(false);
+    }
+  }, [isOpen, shiftToEdit]);
 
   if (!isOpen) return null;
 
@@ -39,11 +58,13 @@ export const NewShiftModal: React.FC<NewShiftModalProps> = ({
         end_time: endTime.length === 5 ? `${endTime}:00` : endTime,
       };
 
-      const newShift = await api.createShift(payload);
-      onShiftCreated(newShift);
+      const savedShift = isEditing && shiftToEdit
+        ? await api.updateShift(shiftToEdit.id, payload)
+        : await api.createShift(payload);
+      onShiftCreated(savedShift);
       onClose();
     } catch (err: any) {
-      setErrorMessage(err.message || 'Erro ao criar turno');
+      setErrorMessage(err.message || 'Erro ao salvar turno');
     } finally {
       setLoading(false);
     }
@@ -59,11 +80,17 @@ export const NewShiftModal: React.FC<NewShiftModalProps> = ({
         <div className="px-6 py-4 bg-gradient-to-r from-indigo-50 to-white border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
-              <Sun className="w-5 h-5" />
+              {isEditing ? <Pencil className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">Novo Turno</h2>
-              <p className="text-xs text-slate-500">Cadastre um período letivo para o calendário escolar.</p>
+              <h2 className="text-base font-bold text-slate-900">
+                {isEditing ? 'Editar Turno' : 'Novo Turno'}
+              </h2>
+              <p className="text-xs text-slate-500">
+                {isEditing
+                  ? 'Altere o nome ou janela de horário deste turno.'
+                  : 'Cadastre um período letivo para o calendário escolar.'}
+              </p>
             </div>
           </div>
           <button
@@ -145,8 +172,8 @@ export const NewShiftModal: React.FC<NewShiftModalProps> = ({
                 </>
               ) : (
                 <>
-                  <Plus className="w-4 h-4" />
-                  <span>Cadastrar Turno</span>
+                  {isEditing ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  <span>{isEditing ? 'Salvar Alterações' : 'Cadastrar Turno'}</span>
                 </>
               )}
             </button>

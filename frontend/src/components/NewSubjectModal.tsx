@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, BookOpen, Pencil, Plus, Loader2, AlertCircle } from 'lucide-react';
-import type { Subject } from '../types';
+import { X, BookOpen, Pencil, Plus, Loader2, AlertCircle, Users, Check, Search } from 'lucide-react';
+import type { Subject, Teacher } from '../types';
 import { api } from '../services/api';
 
 interface NewSubjectModalProps {
@@ -8,6 +8,7 @@ interface NewSubjectModalProps {
   onClose: () => void;
   onSaved: () => void;
   subjectToEdit?: Subject | null;
+  teachers?: Teacher[];
 }
 
 const COLOR_PALETTE = [
@@ -33,6 +34,7 @@ export const NewSubjectModal: React.FC<NewSubjectModalProps> = ({
   onClose,
   onSaved,
   subjectToEdit,
+  teachers = [],
 }) => {
   const isEditing = Boolean(subjectToEdit);
 
@@ -40,6 +42,8 @@ export const NewSubjectModal: React.FC<NewSubjectModalProps> = ({
   const [code, setCode] = useState('');
   const [color, setColor] = useState(COLOR_PALETTE[0]);
   const [requiresLab, setRequiresLab] = useState(false);
+  const [selectedTeacherIds, setSelectedTeacherIds] = useState<number[]>([]);
+  const [teacherSearch, setTeacherSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -50,12 +54,19 @@ export const NewSubjectModal: React.FC<NewSubjectModalProps> = ({
         setCode(subjectToEdit.code || '');
         setColor(subjectToEdit.color || COLOR_PALETTE[0]);
         setRequiresLab(subjectToEdit.requires_lab ?? false);
+        setSelectedTeacherIds(
+          subjectToEdit.teachers ??
+          subjectToEdit.teacher_details?.map(t => t.id) ??
+          []
+        );
       } else {
         setName('');
         setCode('');
         setColor(COLOR_PALETTE[Math.floor(Math.random() * COLOR_PALETTE.length)]);
         setRequiresLab(false);
+        setSelectedTeacherIds([]);
       }
+      setTeacherSearch('');
       setErrorMessage(null);
       setLoading(false);
     }
@@ -92,6 +103,7 @@ export const NewSubjectModal: React.FC<NewSubjectModalProps> = ({
         code: code.trim().toUpperCase().slice(0, 10),
         color,
         requires_lab: Boolean(requiresLab),
+        teachers: selectedTeacherIds,
       };
 
       if (isEditing && subjectToEdit) {
@@ -109,9 +121,20 @@ export const NewSubjectModal: React.FC<NewSubjectModalProps> = ({
     }
   };
 
+  const toggleTeacher = (id: number) => {
+    setSelectedTeacherIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const filteredTeachers = teachers.filter(t =>
+    t.name.toLowerCase().includes(teacherSearch.toLowerCase()) ||
+    t.email.toLowerCase().includes(teacherSearch.toLowerCase())
+  );
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
         <div className="px-6 py-4 bg-gradient-to-r from-indigo-50 to-white border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -137,7 +160,7 @@ export const NewSubjectModal: React.FC<NewSubjectModalProps> = ({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           {errorMessage && (
             <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center space-x-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -230,6 +253,67 @@ export const NewSubjectModal: React.FC<NewSubjectModalProps> = ({
               <span className="text-slate-500 text-[11px]">Disciplinas práticas como Química, Física ou Informática.</span>
             </label>
           </div>
+
+          {/* Connected Teachers (N:N) */}
+          {teachers.length > 0 && (
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
+                  <Users className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Professores Conectados ({selectedTeacherIds.length})</span>
+                </span>
+                {selectedTeacherIds.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTeacherIds([])}
+                    className="text-[11px] font-semibold text-slate-500 hover:text-rose-600 cursor-pointer"
+                  >
+                    Limpar seleção
+                  </button>
+                )}
+              </div>
+
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                <input
+                  type="text"
+                  placeholder="Filtrar professor..."
+                  value={teacherSearch}
+                  onChange={(e) => setTeacherSearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div className="max-h-36 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-1.5 pr-1">
+                {filteredTeachers.map((t) => {
+                  const selected = selectedTeacherIds.includes(t.id);
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => toggleTeacher(t.id)}
+                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border text-left text-xs transition cursor-pointer ${
+                        selected
+                          ? 'bg-indigo-50 border-indigo-300 text-indigo-900 font-bold'
+                          : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2 min-w-0">
+                        <span
+                          className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0"
+                          style={{ backgroundColor: `${t.color}20`, color: t.color }}
+                        >
+                          {t.avatar_initials}
+                        </span>
+                        <span className="truncate">{t.name}</span>
+                      </div>
+                      {selected && <Check className="w-3.5 h-3.5 text-indigo-600 shrink-0 ml-1" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="pt-3 flex items-center justify-end space-x-2 border-t border-slate-100">

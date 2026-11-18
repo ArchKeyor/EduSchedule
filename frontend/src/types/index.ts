@@ -1,3 +1,17 @@
+export interface TeacherSubjectSummary {
+  id: number;
+  name: string;
+  code: string;
+  color: string;
+}
+
+export interface SubjectTeacherSummary {
+  id: number;
+  name: string;
+  avatar_initials: string;
+  color: string;
+}
+
 export interface Teacher {
   id: number;
   name: string;
@@ -11,6 +25,7 @@ export interface Teacher {
   allow_double_lessons: boolean;
   allocated_hours: number;
   availabilities?: TeacherAvailability[];
+  subject_details?: TeacherSubjectSummary[];
 }
 
 export interface TeacherAvailability {
@@ -51,6 +66,8 @@ export interface Subject {
   code: string;
   color: string;
   requires_lab: boolean;
+  teachers?: number[];
+  teacher_details?: SubjectTeacherSummary[];
 }
 
 export interface ClassRoom {
@@ -71,6 +88,7 @@ export interface SchoolClass {
   student_count: number;
   default_room?: number;
   total_weekly_lessons: number;
+  curriculum?: CurriculumRequirement[];
 }
 
 export interface CurriculumRequirement {

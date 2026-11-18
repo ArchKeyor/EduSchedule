@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Navbar } from './components/Navbar';
+import { Navbar, type NavTab } from './components/Navbar';
 import { TimetablePage } from './pages/TimetablePage';
 import { TeachersPage } from './pages/TeachersPage';
 import { TimeSlotsPage } from './pages/TimeSlotsPage';
+import { SubjectsPage } from './pages/SubjectsPage';
+import { ClassesPage } from './pages/ClassesPage';
 import { TeacherPortalPage } from './pages/TeacherPortalPage';
 import { AdminPanelPage } from './pages/AdminPanelPage';
 import { LoginPage, type UserSession } from './pages/LoginPage';
 import { api } from './services/api';
 import type {
-  TimetableSchedule, SchoolClass, Teacher, ClassRoom, TimeSlot, Shift
+  TimetableSchedule, SchoolClass, Teacher, ClassRoom, TimeSlot, Shift, Subject
 } from './types';
 import { Loader2 } from 'lucide-react';
 
@@ -22,7 +24,7 @@ export function App() {
     }
   });
 
-  const [activeTab, setActiveTab] = useState<'grid' | 'teachers' | 'slots' | 'teacher-portal' | 'admin-panel'>(() => {
+  const [activeTab, setActiveTab] = useState<NavTab>(() => {
     if (currentUser?.role === 'teacher') return 'teacher-portal';
     if (currentUser?.role === 'admin') return 'admin-panel';
     return 'grid';
@@ -33,6 +35,7 @@ export function App() {
   const [schedule, setSchedule] = useState<TimetableSchedule | null>(null);
   const [classes, setClasses] = useState<SchoolClass[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [rooms] = useState<ClassRoom[]>([]);
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
@@ -40,17 +43,19 @@ export function App() {
   const loadAllData = async () => {
     try {
       setLoading(true);
-      const [classesRes, teachersRes, slotsRes, shiftsRes] = await Promise.all([
+      const [classesRes, teachersRes, slotsRes, shiftsRes, subjectsRes] = await Promise.all([
         api.getClasses(),
         api.getTeachers(),
         api.getSlots(),
         api.getShifts(),
+        api.getSubjects(),
       ]);
 
       setClasses(classesRes);
       setTeachers(teachersRes);
       setSlots(slotsRes);
       setShifts(shiftsRes);
+      setSubjects(subjectsRes);
 
       try {
         const scheduleRes = await api.getActiveTimetable();
@@ -88,7 +93,15 @@ export function App() {
       const res = await api.runSolver('Grade Oficial 2026.1 (IA Timetabling)', '1º Semestre 2026');
       const updatedSchedule = await api.getActiveTimetable();
       setSchedule(updatedSchedule);
-      alert(`🎉 Otimização concluída com sucesso!\nScore de Viabilidade: ${res.viability_score}%\nViolações Rígidas: ${res.hard_violations}\nTempo de Execução: ${res.execution_time}s`);
+      const summaryLines = Array.isArray(res.classes_summary)
+        ? '\n\nResumo por turma:\n' +
+          res.classes_summary
+            .map((c: any) => `• ${c.class_name} (${c.shift_name}): ${c.allocated}/${c.expected} aulas`)
+            .join('\n')
+        : '';
+      alert(
+        `🎉 Otimização concluída para todas as turmas!\nScore de Viabilidade: ${res.viability_score}%\nViolações Rígidas: ${res.hard_violations}\nTempo de Execução: ${res.execution_time}s${summaryLines}`
+      );
     } catch (err: any) {
       alert('Erro ao executar solver: ' + err.message);
     } finally {
@@ -136,9 +149,30 @@ export function App() {
             teachers={teachers}
             rooms={rooms}
             slots={slots}
+            shifts={shifts}
+            subjects={subjects}
             onRunSolver={handleRunSolver}
             onRefresh={loadAllData}
             isSolving={isSolving}
+          />
+        )}
+
+        {activeTab === 'classes' && (
+          <ClassesPage
+            classes={classes}
+            shifts={shifts}
+            subjects={subjects}
+            teachers={teachers}
+            slots={slots}
+            onRefresh={loadAllData}
+          />
+        )}
+
+        {activeTab === 'subjects' && (
+          <SubjectsPage
+            subjects={subjects}
+            teachers={teachers}
+            onRefresh={loadAllData}
           />
         )}
 
@@ -154,6 +188,7 @@ export function App() {
           <TimeSlotsPage
             shifts={shifts}
             slots={slots}
+            classes={classes}
             onRefresh={loadAllData}
           />
         )}
