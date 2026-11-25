@@ -68,7 +68,7 @@ ROOT_URLCONF = 'eduschedule_backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'spa_build'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -164,6 +164,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+WHITENOISE_ROOT = BASE_DIR / 'spa_build'
 STORAGES = {
     'default': {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
