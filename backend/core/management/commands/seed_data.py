@@ -1,23 +1,57 @@
 import sys
 from django.core.management.base import BaseCommand
+from core.seeds import seed_professor_eds
 from core.models import (
     Shift, TimeSlot, Subject, Teacher, TeacherAvailability,
-    SchoolClass, CurriculumRequirement, ConstraintConfig
+    SchoolClass, CurriculumRequirement, ConstraintConfig,
+    TimetableSchedule, TimetableSlotAssignment
 )
 
 
 class Command(BaseCommand):
-    help = "Popula o banco de dados com dados iniciais (turnos, disciplinas, professores, turmas, restrições) de forma idempotente."
+    help = "Popula o banco de dados com dados iniciais. Suporta o cenário oficial de EDS do professor ou Ensino Médio."
 
     def add_arguments(self, parser):
+        parser.add_argument(
+            '--scenario',
+            type=str,
+            default='eds',
+            choices=['eds', 'medio'],
+            help="Cenário de seed: 'eds' (Oficial do Professor - Graduação EDS) ou 'medio' (Ensino Médio)",
+        )
         parser.add_argument(
             '--with-solver',
             action='store_true',
             help='Executa o solver após o seed para gerar a grade inicial alocada.',
         )
+        parser.add_argument(
+            '--clear',
+            action='store_true',
+            default=True,
+            help='Limpa dados anteriores antes do seed.',
+        )
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.NOTICE("Iniciando seed de dados do EduSchedule..."))
+        scenario = options.get('scenario', 'eds')
+
+        if scenario == 'eds':
+            self.stdout.write(self.style.NOTICE("Executando seed oficial do professor: Graduação em Engenharia de Software (EDS)..."))
+            res = seed_professor_eds(clear=options.get('clear', True))
+            self.stdout.write(self.style.SUCCESS(f"\n[SUCESSO] Base de EDS populada com sucesso!"))
+            return
+
+        # Cenário Ensino Médio
+        self.stdout.write(self.style.NOTICE("Executando seed: Ensino Médio (3º Ano A e B)..."))
+        if options.get('clear', True):
+            TimetableSlotAssignment.objects.all().delete()
+            TimetableSchedule.objects.all().delete()
+            CurriculumRequirement.objects.all().delete()
+            SchoolClass.objects.all().delete()
+            TeacherAvailability.objects.all().delete()
+            Teacher.objects.all().delete()
+            Subject.objects.all().delete()
+            TimeSlot.objects.all().delete()
+            Shift.objects.all().delete()
 
         # 1. Turno Padrão & Slots de Tempo
         shift, _ = Shift.objects.get_or_create(
@@ -40,7 +74,6 @@ class Command(BaseCommand):
                 defaults=s
             )
             created_slots.append(slot)
-        self.stdout.write(self.style.SUCCESS(f"  [OK] Turno '{shift.name}' e {len(created_slots)} horarios configurados."))
 
         # 2. Disciplinas
         subjects_data = [
@@ -61,7 +94,6 @@ class Command(BaseCommand):
         for s in subjects_data:
             subj, _ = Subject.objects.update_or_create(code=s['code'], defaults=s)
             created_subjects[s['code']] = subj
-        self.stdout.write(self.style.SUCCESS(f"  [OK] {len(created_subjects)} disciplinas cadastradas."))
 
         # 3. Professores
         teachers_data = [
@@ -81,11 +113,9 @@ class Command(BaseCommand):
         for t in teachers_data:
             teacher, _ = Teacher.objects.update_or_create(email=t['email'], defaults=t)
             created_teachers[t['name']] = teacher
-        self.stdout.write(self.style.SUCCESS(f"  [OK] {len(created_teachers)} professores cadastrados."))
 
         # 4. Disponibilidade Docente
         non_break_slots = [s for s in created_slots if not s.is_break]
-        avail_count = 0
         for teacher in created_teachers.values():
             for d in range(5):
                 for s in non_break_slots:
@@ -98,10 +128,8 @@ class Command(BaseCommand):
                         teacher=teacher, day_of_week=d, time_slot=s,
                         defaults={'status': st}
                     )
-                    avail_count += 1
-        self.stdout.write(self.style.SUCCESS(f"  [OK] Grade de disponibilidades docentes configurada ({avail_count} slots)."))
 
-        # 5. Turmas Escolares
+        # 5. Turmas
         c3a, _ = SchoolClass.objects.update_or_create(
             name="3º Ano A",
             defaults={'grade_level': '3º Ano Ensino Médio', 'shift': shift, 'student_count': 35}
@@ -110,7 +138,6 @@ class Command(BaseCommand):
             name="3º Ano B",
             defaults={'grade_level': '3º Ano Ensino Médio', 'shift': shift, 'student_count': 32}
         )
-        self.stdout.write(self.style.SUCCESS("  [OK] Turmas escolares '3º Ano A' e '3º Ano B' cadastradas."))
 
         # 6. Demandas Curriculares (3º Ano A)
         curric_3a = [
@@ -131,9 +158,8 @@ class Command(BaseCommand):
                 school_class=c3a, subject=subj,
                 defaults={'teacher': teach, 'weekly_lessons': hours, 'double_lessons_allowed': True}
             )
-        self.stdout.write(self.style.SUCCESS(f"  [OK] {len(curric_3a)} demandas curriculares vinculadas ao 3º Ano A."))
 
-        # 7. Configurações de Restrições (Pesos e Penalidades)
+        # 7. Restrições
         constraints = [
             {'name': 'Sem choque de professor', 'key': 'teacher_clash', 'is_hard': True, 'weight': 100, 'description': 'Inviolável: 1 professor em apenas 1 turma simultânea'},
             {'name': 'Indisponibilidade do docente', 'key': 'teacher_blocked', 'is_hard': True, 'weight': 100, 'description': 'Respeitar dias bloqueados pelo professor'},
@@ -144,17 +170,11 @@ class Command(BaseCommand):
         ]
         for c in constraints:
             ConstraintConfig.objects.update_or_create(key=c['key'], defaults=c)
-        self.stdout.write(self.style.SUCCESS(f"  [OK] {len(constraints)} parâmetros de restrições salvos."))
 
         # 8. Solver Opcional
         if options.get('with_solver'):
-            self.stdout.write(self.style.NOTICE("Executando solver para alocar grade inicial..."))
-            try:
-                from solver.engine import TimetablingSolver
-                solver = TimetablingSolver(schedule_name="Grade Oficial 2026.1", semester="1º Semestre 2026")
-                solver_res = solver.solve()
-                self.stdout.write(self.style.SUCCESS(f"  [OK] Grade gerada com status: {solver_res.get('status')} (Score: {solver_res.get('final_score')})"))
-            except Exception as e:
-                self.stdout.write(self.style.WARNING(f"  ! Solver não pôde ser executado: {e}"))
+            from solver.engine import TimetablingSolver
+            solver = TimetablingSolver(schedule_name="Grade Oficial 2026.1", semester="1º Semestre 2026")
+            solver.solve()
 
-        self.stdout.write(self.style.SUCCESS("\nSeed concluído com sucesso! Banco de dados pronto para uso."))
+        self.stdout.write(self.style.SUCCESS("\nSeed concluído com sucesso!"))

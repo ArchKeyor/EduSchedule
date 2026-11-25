@@ -87,6 +87,32 @@ O agente deve **executar automaticamente** o pipeline de preparação, validaç�
      - 🌐 **Frontend UI:** [http://localhost:5173/](http://localhost:5173/)
      - ⚙️ **Backend API:** [http://127.0.0.1:8000/api/](http://127.0.0.1:8000/api/)
 
+### 5.1 Protocolo Expresso das Turmas do Professor ("Rode as turmas do professor")
+
+Quando o usuário disser no chat:
+* *"Antigravity, rode as turmas do professor"*
+* *"rode as turmas do professor"*
+* *"execute as turmas do professor"*
+* *"popule com os dados do professor"*
+* ou variações similares
+
+O agente deve **executar automaticamente** o fluxo completo sem delongas:
+1. **Garantia de Ambiente (se for máquina nova da faculdade):**
+   - Se `.venv` não existir: criar via `python -m venv .venv` e instalar dependências via `.venv\Scripts\pip install -r backend\requirements.txt`.
+   - Se `frontend\node_modules` não existir: rodar `npm --prefix frontend install`.
+2. **Garantia de Migrações & Seed Oficial:**
+   - Executar migrações: `.venv\Scripts\python.exe backend\manage.py migrate`.
+   - Executar seed com solver integrado: `.venv\Scripts\python.exe backend\manage.py seed_data --scenario=eds`.
+3. **Garantia de Servidores Ativos:**
+   - Verificar se o backend (porta 8000) e o frontend (porta 5173) já estão respondendo. Se não estiverem, iniciá-los em background:
+     - Backend: `.venv\Scripts\python.exe backend\manage.py runserver 127.0.0.1:8000`.
+     - Frontend: `npm --prefix frontend run dev`.
+4. **Relatório Imediato de Status:**
+   - Confirmar que as 3 turmas de EDS (2º, 4º e 6º período de Engenharia de Software, 60 aulas) foram carregadas e a grade foi gerada pelo Simulated Annealing.
+   - Apresentar o link clicável direto para visualização:
+     - 🌐 **Frontend UI:** [http://localhost:5173/](http://localhost:5173/)
+     - ⚙️ **Backend API:** [http://127.0.0.1:8000/api/](http://127.0.0.1:8000/api/)
+
 
 ---
 
