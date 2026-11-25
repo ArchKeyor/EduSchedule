@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
 from django.contrib.auth.models import User
 from rest_framework import viewsets, status
@@ -23,7 +23,7 @@ from solver.engine import TimetablingSolver
 
 
 class TeacherViewSet(viewsets.ModelViewSet):
-    queryset = Teacher.objects.prefetch_related('availabilities', 'curriculum_assignments').all()
+    queryset = Teacher.objects.prefetch_related('availabilities', 'curriculum_assignments', 'subjects').all()
     serializer_class = TeacherSerializer
     parser_classes = (MultiPartParser, FormParser, JSONParser)
 
@@ -80,9 +80,32 @@ class TimeSlotViewSet(viewsets.ModelViewSet):
     queryset = TimeSlot.objects.select_related('shift').all()
     serializer_class = TimeSlotSerializer
 
+    @action(detail=False, methods=['post'])
+    def reorder(self, request):
+        slot_ids = request.data.get('slot_ids', [])
+        if not isinstance(slot_ids, list) or not slot_ids:
+            return Response(
+                {'error': 'Informe uma lista válida de slot_ids para reordenação.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        with transaction.atomic():
+            slots_map = {s.id: s for s in TimeSlot.objects.filter(id__in=slot_ids)}
+            updated_slots = []
+            for idx, slot_id in enumerate(slot_ids, start=1):
+                slot = slots_map.get(int(slot_id))
+                if slot and slot.order != idx:
+                    slot.order = idx
+                    slot.save(update_fields=['order'])
+                if slot:
+                    updated_slots.append(slot)
+
+        serializer = self.get_serializer(updated_slots, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class SubjectViewSet(viewsets.ModelViewSet):
-    queryset = Subject.objects.all()
+    queryset = Subject.objects.prefetch_related('teachers').all()
     serializer_class = SubjectSerializer
 
 

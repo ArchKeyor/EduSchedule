@@ -459,8 +459,8 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({
 
               {/* Availability Interactive Grid */}
               <div className="border border-slate-200 rounded-lg overflow-hidden text-xs">
-                <div className="grid grid-cols-6 bg-slate-50 border-b border-slate-200 p-2 font-bold text-slate-500 text-center text-[10px]">
-                  <div>Slot</div>
+                <div className="grid grid-cols-[92px_repeat(5,minmax(0,1fr))] bg-slate-50 border-b border-slate-200 p-2 font-bold text-slate-500 text-center text-[10px] items-center">
+                  <div className="text-left pl-1">Slot</div>
                   {days.map(d => (
                     <div key={d.id}>{d.name}</div>
                   ))}
@@ -468,8 +468,17 @@ export const TeachersPage: React.FC<TeachersPageProps> = ({
 
                 <div className="divide-y divide-slate-100">
                   {regularSlots.map(slot => (
-                    <div key={slot.id} className="grid grid-cols-6 p-1.5 items-center text-center">
-                      <span className="text-[10px] font-bold text-slate-500">{slot.name.replace(' Período', 'º')}</span>
+                    <div key={slot.id} className="grid grid-cols-[92px_repeat(5,minmax(0,1fr))] p-1.5 items-center text-center">
+                      <div className="text-left pl-1 leading-tight">
+                        <div className="text-[11px] font-bold text-slate-700 truncate" title={slot.name}>
+                          {slot.name.replace(' Período', 'º')}
+                        </div>
+                        {slot.start_time && slot.end_time && (
+                          <div className="text-[9px] font-medium text-slate-400 whitespace-nowrap">
+                            {slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}
+                          </div>
+                        )}
+                      </div>
                       {days.map(d => {
                         const key = `${d.id}_${slot.id}`;
                         const status = availMap[key] || 'FREE';

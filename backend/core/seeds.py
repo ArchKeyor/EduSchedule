@@ -200,6 +200,7 @@ def seed_professor_eds(clear=True):
             weekly_lessons=qtd,
             double_lessons_allowed=True
         ))
+        disc_dict[d_nome].teachers.add(prof_dict[p_nome])
     CurriculumRequirement.objects.bulk_create(curric_objs)
     print(f"[OK] {len(curric_objs)} demandas curriculares cadastradas.")
 

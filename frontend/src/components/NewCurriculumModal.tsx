@@ -54,6 +54,26 @@ export const NewCurriculumModal: React.FC<NewCurriculumModalProps> = ({
     }
   }, [isOpen, curriculumToEdit, preselectedClassId, classes, subjects, teachers]);
 
+  const selectedSubject = subjects.find(s => s.id === Number(subjectId));
+  const connectedTeacherIds = new Set<number>(
+    selectedSubject?.teachers ?? selectedSubject?.teacher_details?.map(t => t.id) ?? []
+  );
+
+  const sortedTeachers = [...teachers].sort((a, b) => {
+    const aConn = connectedTeacherIds.has(a.id) ? 0 : 1;
+    const bConn = connectedTeacherIds.has(b.id) ? 0 : 1;
+    if (aConn !== bConn) return aConn - bConn;
+    return a.name.localeCompare(b.name);
+  });
+
+  useEffect(() => {
+    if (!isOpen || isEditing) return;
+    if (connectedTeacherIds.size > 0 && !connectedTeacherIds.has(Number(teacherId))) {
+      const firstConnected = teachers.find(t => connectedTeacherIds.has(t.id));
+      if (firstConnected) setTeacherId(firstConnected.id);
+    }
+  }, [subjectId, isOpen, isEditing]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -185,12 +205,21 @@ export const NewCurriculumModal: React.FC<NewCurriculumModalProps> = ({
               onChange={(e) => setTeacherId(Number(e.target.value))}
               className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
             >
-              {teachers.map((t) => (
-                <option key={t.id} value={t.id}>
-                  👨‍🏫 {t.name} (Max {t.max_weekly_hours}h/sem)
-                </option>
-              ))}
+              {sortedTeachers.map((t) => {
+                const isConnected = connectedTeacherIds.has(t.id);
+                return (
+                  <option key={t.id} value={t.id}>
+                    {isConnected ? '★ ' : ''}👨‍🏫 {t.name} (Max {t.max_weekly_hours}h/sem)
+                    {isConnected ? ' — Habilitado' : ''}
+                  </option>
+                );
+              })}
             </select>
+            {connectedTeacherIds.size > 0 && (
+              <p className="text-[10px] text-indigo-600 font-medium mt-1">
+                ★ Professores conectados à disciplina {selectedSubject?.code} aparecem primeiro.
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3 items-center">
